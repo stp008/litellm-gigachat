@@ -1,0 +1,26 @@
+model_list:
+  - model_name: gigachat                 # публичное имя (как увидит клиент)
+    litellm_params:
+      model: openai/GigaChat
+      api_base: https://gigachat.devices.sberbank.ru/api/v1
+      api_key: "auto"                    # токен будет автоматически обновляться через callback
+      timeout: 60
+  - model_name: gigachat-pro             # дополнительная модель
+    litellm_params:
+      model: openai/GigaChat-2-Pro
+      api_base: https://gigachat.devices.sberbank.ru/api/v1
+      api_key: "auto"                    # токен будет автоматически обновляться через callback
+      timeout: 60
+  - model_name: gigachat-max             # модель с максимальными возможностями
+    litellm_params:
+      model: openai/GigaChat-2-Max
+      api_base: https://gigachat.devices.sberbank.ru/api/v1
+      api_key: "auto"                    # токен будет автоматически обновляться через callback
+      timeout: 60
+
+litellm_settings:
+  set_verbose: True
+  ssl_verify: false
+  callbacks:
+    - src.callbacks.content_handler.flatten_content_handler_instance
+    - src.callbacks.token_callback.gigachat_callback_instance
