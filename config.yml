@@ -22,5 +22,5 @@ litellm_settings:
   set_verbose: True
   ssl_verify: false
   callbacks:
-    - src.callbacks.content_handler.flatten_content_handler_instance
+    - src.callbacks.content_handler.gigachat_transformer_instance
     - src.callbacks.token_callback.gigachat_callback_instance

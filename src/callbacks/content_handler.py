@@ -4,16 +4,26 @@ from litellm.integrations.custom_logger import CustomLogger
 from litellm.proxy.proxy_server import UserAPIKeyAuth, DualCache
 from typing import Literal
 import json
+import uuid
+import time
 
 logger = logging.getLogger(__name__)
 
-class FlattenContentHandler(CustomLogger):
+class GigaChatTransformer(CustomLogger):
     """
-    Улучшенный обработчик для преобразования контента сообщений:
-    - Преобразует массивы фрагментов контента в строки для GigaChat API
-    - Обрабатывает сложные структуры данных
-    - Обеспечивает надежную валидацию и обработку ошибок
-    - Поддерживает детальное логирование для отладки
+    Двунаправленный трансформер для обеспечения совместимости между OpenAI API и GigaChat API:
+    
+    Трансформация запросов (OpenAI → GigaChat):
+    - Преобразует массивы фрагментов контента в строки
+    - Трансформирует tools в functions
+    - Преобразует tool_choice в function_call
+    - Адаптирует параметры запроса
+    
+    Трансформация ответов (GigaChat → OpenAI):
+    - Преобразует function_call в tool_calls
+    - Адаптирует структуру ответа
+    - Обрабатывает finish_reason
+    - Поддерживает streaming
     """
 
     def __init__(self, debug_mode: bool = True):
@@ -179,6 +189,178 @@ class FlattenContentHandler(CustomLogger):
             self.conversion_stats['errors'] += 1
             return 0
 
+    def _transform_tools_to_functions(self, tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Преобразует OpenAI tools в GigaChat functions"""
+        try:
+            if not tools:
+                return []
+            
+            functions = []
+            for tool in tools:
+                if tool.get('type') == 'function' and 'function' in tool:
+                    function_def = tool['function']
+                    gigachat_function = {
+                        'name': function_def.get('name'),
+                        'description': function_def.get('description'),
+                        'parameters': function_def.get('parameters', {})
+                    }
+                    functions.append(gigachat_function)
+                    
+            if self.debug_mode:
+                logger.debug(f"Преобразовано {len(tools)} tools в {len(functions)} functions")
+                
+            return functions
+        except Exception as e:
+            logger.error(f"Ошибка при преобразовании tools в functions: {e}")
+            return []
+
+    def _transform_tool_choice_to_function_call(self, tool_choice: Union[str, Dict[str, Any]]) -> Union[str, Dict[str, Any]]:
+        """Преобразует OpenAI tool_choice в GigaChat function_call"""
+        try:
+            if tool_choice == "none":
+                return "none"
+            elif tool_choice == "auto":
+                return "auto"
+            elif isinstance(tool_choice, dict) and tool_choice.get('type') == 'function':
+                function_name = tool_choice.get('function', {}).get('name')
+                if function_name:
+                    return {'name': function_name}
+            
+            if self.debug_mode:
+                logger.debug(f"Преобразован tool_choice: {tool_choice}")
+                
+            return tool_choice
+        except Exception as e:
+            logger.error(f"Ошибка при преобразовании tool_choice: {e}")
+            return tool_choice
+
+    def _prepare_gigachat_payload(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Подготавливает полный payload для GigaChat API"""
+        try:
+            # Базовые параметры
+            payload = {
+                'model': data.get('model', 'GigaChat'),
+                'messages': data.get('messages', []),
+                'temperature': data.get('temperature'),
+                'max_tokens': data.get('max_tokens'),
+                'top_p': data.get('top_p'),
+                'stream': data.get('stream', False)
+            }
+
+            # Обрабатываем tools (функции)
+            tools = data.get('tools')
+            if tools:
+                functions = self._transform_tools_to_functions(tools)
+                if functions:
+                    payload['functions'] = functions
+
+            # Обрабатываем tool_choice
+            tool_choice = data.get('tool_choice')
+            if tool_choice and tool_choice != "none":
+                function_call = self._transform_tool_choice_to_function_call(tool_choice)
+                payload['function_call'] = function_call
+
+            # Удаляем значения None
+            payload = {k: v for k, v in payload.items() if v is not None}
+            
+            if self.debug_mode:
+                logger.debug(f"Подготовлен GigaChat payload с {len(payload)} параметрами")
+                
+            return payload
+        except Exception as e:
+            logger.error(f"Ошибка при подготовке GigaChat payload: {e}")
+            return data
+
+    def _transform_function_call_to_tool_calls(self, function_call: Any) -> List[Dict[str, Any]]:
+        """Преобразует GigaChat function_call в OpenAI tool_calls"""
+        try:
+            if not function_call:
+                return []
+            
+            # Получаем name и arguments из объекта (может быть dict или объект с атрибутами)
+            if isinstance(function_call, dict):
+                name = function_call.get('name', '')
+                arguments = function_call.get('arguments', {})
+            else:
+                # Для объектов (включая Mock) используем getattr
+                name = getattr(function_call, 'name', '')
+                arguments = getattr(function_call, 'arguments', {})
+            
+            if not name:
+                return []
+            
+            tool_call = {
+                'id': f"call_{uuid.uuid4()}",
+                'type': 'function',
+                'function': {
+                    'name': name,
+                    'arguments': json.dumps(arguments, ensure_ascii=False)
+                }
+            }
+            
+            if self.debug_mode:
+                logger.debug(f"Преобразован function_call в tool_calls: {name}")
+                
+            return [tool_call]
+        except Exception as e:
+            logger.error(f"Ошибка при преобразовании function_call в tool_calls: {e}")
+            return []
+
+    def _transform_gigachat_response_to_openai(self, giga_response: Any) -> Dict[str, Any]:
+        """Преобразует ответ GigaChat в формат OpenAI"""
+        try:
+            if not hasattr(giga_response, 'choices') or not giga_response.choices:
+                logger.warning("GigaChat ответ не содержит choices")
+                return {}
+            
+            choice = giga_response.choices[0]
+            message = choice.message
+            usage = getattr(giga_response, "usage", None)
+
+            openai_message = {
+                "role": message.role,
+                "content": message.content
+            }
+
+            finish_reason = "stop"
+
+            # Обрабатываем function_call если есть
+            function_call = getattr(message, "function_call", None)
+            if function_call is not None:
+                # Проверяем, что это не пустой Mock или объект
+                if hasattr(function_call, 'name') and function_call.name:
+                    tool_calls = self._transform_function_call_to_tool_calls(function_call)
+                    if tool_calls:
+                        openai_message["tool_calls"] = tool_calls
+                        openai_message["content"] = None
+                        finish_reason = "tool_calls"
+
+            openai_response = {
+                "id": f"chatcmpl-{uuid.uuid4()}",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": getattr(giga_response, 'model', 'gpt-4'),
+                "choices": [{
+                    "index": 0,
+                    "message": openai_message,
+                    "finish_reason": finish_reason
+                }],
+                "usage": {
+                    "prompt_tokens": usage.prompt_tokens if usage else 0,
+                    "completion_tokens": usage.completion_tokens if usage else 0,
+                    "total_tokens": usage.total_tokens if usage else 0
+                },
+                "system_fingerprint": None
+            }
+            
+            if self.debug_mode:
+                logger.debug(f"Преобразован GigaChat ответ в OpenAI формат")
+                
+            return openai_response
+        except Exception as e:
+            logger.error(f"Ошибка при преобразовании GigaChat ответа: {e}")
+            return {}
+
     def _log_request_info(self, data: Dict[str, Any], converted_count: int):
         """Логирует информацию о запросе"""
         try:
@@ -205,7 +387,7 @@ class FlattenContentHandler(CustomLogger):
                            "image_generation", "moderation", "audio_transcription"],
     ) -> dict:
         """
-        Основной hook для преобразования контента перед отправкой запроса
+        Трансформация запроса OpenAI → GigaChat перед отправкой
         """
         try:
             self.processed_requests += 1
@@ -222,8 +404,14 @@ class FlattenContentHandler(CustomLogger):
             # Создаем копию данных для безопасной обработки
             processed_data = data.copy()
             
-            # Обрабатываем сообщения
+            # 1. Обрабатываем сообщения (преобразование контента)
             converted_count = self._process_messages(processed_data)
+            
+            # 2. Подготавливаем полный GigaChat payload (включая tools/functions)
+            gigachat_payload = self._prepare_gigachat_payload(processed_data)
+            
+            # Обновляем данные запроса
+            processed_data.update(gigachat_payload)
             
             # Логируем результаты
             self._log_request_info(processed_data, converted_count)
@@ -234,10 +422,45 @@ class FlattenContentHandler(CustomLogger):
             return processed_data
             
         except Exception as e:
-            logger.error(f"Критическая ошибка в FlattenContentHandler: {e}")
+            logger.error(f"Критическая ошибка в GigaChatTransformer: {e}")
             self.conversion_stats['errors'] += 1
             # Возвращаем оригинальные данные при ошибке
             return data
+
+    async def async_post_call_success_hook(
+        self,
+        data: dict,
+        user_api_key_dict: UserAPIKeyAuth,
+        response,
+    ):
+        """
+        Трансформация ответа GigaChat → OpenAI после успешного запроса
+        """
+        try:
+            # Проверяем, является ли это ответом от GigaChat
+            if not self._is_gigachat_request(data):
+                if self.debug_mode:
+                    logger.debug("Ответ не от GigaChat, пропускаем трансформацию")
+                return response
+            
+            if self.debug_mode:
+                logger.debug("Трансформируем ответ GigaChat в формат OpenAI")
+            
+            # Трансформируем ответ
+            openai_response = self._transform_gigachat_response_to_openai(response)
+            
+            if openai_response:
+                if self.debug_mode:
+                    logger.debug("Ответ успешно трансформирован в OpenAI формат")
+                return openai_response
+            else:
+                logger.warning("Не удалось трансформировать ответ, возвращаем оригинал")
+                return response
+                
+        except Exception as e:
+            logger.error(f"Ошибка при трансформации ответа GigaChat: {e}")
+            # Возвращаем оригинальный ответ при ошибке
+            return response
 
     def get_stats(self) -> Dict[str, Any]:
         """Возвращает статистику работы обработчика"""
@@ -257,35 +480,35 @@ class FlattenContentHandler(CustomLogger):
 
 
 # Глобальный экземпляр для подключения в конфиге
-_flatten_content_handler = None
+_gigachat_transformer = None
 
-def get_flatten_content_handler(debug_mode: bool = True) -> FlattenContentHandler:
-    """Получение глобального экземпляра FlattenContentHandler"""
-    global _flatten_content_handler
-    if _flatten_content_handler is None:
-        _flatten_content_handler = FlattenContentHandler(debug_mode=debug_mode)
-    return _flatten_content_handler
+def get_gigachat_transformer(debug_mode: bool = True) -> GigaChatTransformer:
+    """Получение глобального экземпляра GigaChatTransformer"""
+    global _gigachat_transformer
+    if _gigachat_transformer is None:
+        _gigachat_transformer = GigaChatTransformer(debug_mode=debug_mode)
+    return _gigachat_transformer
 
 # Экземпляр для подключения в конфиге
-flatten_content_handler_instance = get_flatten_content_handler()
+gigachat_transformer_instance = get_gigachat_transformer()
 
-def setup_flatten_content_integration():
+def setup_gigachat_transformer():
     """
-    Настройка интеграции улучшенного обработчика контента с LiteLLM
+    Настройка интеграции GigaChatTransformer с LiteLLM
     """
     import litellm
     
-    handler = get_flatten_content_handler()
+    transformer = get_gigachat_transformer()
     
-    # Проверяем, не добавлен ли уже handler
-    if handler not in litellm.callbacks:
-        litellm.callbacks.append(handler)
-        logger.info("FlattenContentHandler добавлен в LiteLLM")
+    # Проверяем, не добавлен ли уже transformer
+    if transformer not in litellm.callbacks:
+        litellm.callbacks.append(transformer)
+        logger.info("GigaChatTransformer добавлен в LiteLLM")
     else:
-        logger.debug("FlattenContentHandler уже добавлен в LiteLLM")
+        logger.debug("GigaChatTransformer уже добавлен в LiteLLM")
 
 # Функция для получения статистики (для отладки)
-def get_flatten_content_stats() -> Dict[str, Any]:
-    """Получить статистику работы обработчика"""
-    handler = get_flatten_content_handler()
-    return handler.get_stats()
+def get_gigachat_transformer_stats() -> Dict[str, Any]:
+    """Получить статистику работы трансформера"""
+    transformer = get_gigachat_transformer()
+    return transformer.get_stats()
