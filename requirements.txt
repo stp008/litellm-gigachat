@@ -1,6 +1,6 @@
-# LiteLLM и прокси
-litellm>=1.50.0,<2.0.0
-litellm[proxy]>=1.50.0,<2.0.0
+# LiteLLM и прокси (точная версия для воспроизводимости)
+litellm==1.65.1
+litellm[proxy]==1.65.1
 
 # HTTP клиент
 requests>=2.31.0,<3.0.0
