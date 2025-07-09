@@ -9,8 +9,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from typing import Dict, Any
-from src.callbacks.content_handler import FlattenContentHandler, get_flatten_content_handler
+from src.litellm_gigachat.callbacks.content_handler import FlattenContentHandler, get_flatten_content_handler
 
 # Настройка логирования для тестов
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

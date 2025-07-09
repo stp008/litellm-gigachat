@@ -10,8 +10,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import litellm
-from src.core.token_manager import get_gigachat_token, get_global_token_manager
-from src.callbacks.token_callback import setup_litellm_gigachat_integration
+from src.litellm_gigachat.core import get_gigachat_token, get_global_token_manager
+from src.litellm_gigachat.callbacks import setup_litellm_gigachat_integration
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

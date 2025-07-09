@@ -5,9 +5,8 @@
 
 import pytest
 import json
-import uuid
-from unittest.mock import Mock, AsyncMock
-from src.callbacks.content_handler import GigaChatTransformer
+from unittest.mock import Mock
+from src.litellm_gigachat.callbacks.content_handler import GigaChatTransformer
 
 
 class TestGigaChatTransformer:

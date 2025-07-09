@@ -8,8 +8,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.token_manager import get_global_token_manager, get_gigachat_token
-from src.callbacks.token_callback import get_gigachat_callback
+from src.litellm_gigachat.core import get_global_token_manager, get_gigachat_token
+from src.litellm_gigachat.callbacks import get_gigachat_callback
 import litellm
 
 # Настройка логирования

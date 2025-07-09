@@ -7,7 +7,7 @@
 import asyncio
 import json
 from unittest.mock import Mock
-from src.callbacks.content_handler import GigaChatTransformer
+from src.litellm_gigachat.callbacks.content_handler import GigaChatTransformer
 
 
 async def example_request_transformation():

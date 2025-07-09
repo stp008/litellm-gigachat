@@ -196,7 +196,7 @@ curl -k "https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt" -w "\
 ### Как проверить статус токена?
 
 ```python
-from src.core.token_manager import get_global_token_manager
+from src.litellm_gigachat.core import get_global_token_manager
 
 manager = get_global_token_manager()
 info = manager.get_token_info()
@@ -219,7 +219,7 @@ logging.basicConfig(level=logging.DEBUG)
 ### Как получить статистику обработки?
 
 ```python
-from src.callbacks.content_handler import get_flatten_content_stats
+from src.litellm_gigachat.callbacks.content_handler import get_flatten_content_stats
 
 stats = get_flatten_content_stats()
 print(f"Обработано запросов: {stats['processed_requests']}")
@@ -278,14 +278,15 @@ python start_proxy.py
 
 ```python
 # Добавьте в ваш проект
-from src.core.token_manager import get_gigachat_token
-from src.callbacks.token_callback import setup_litellm_gigachat_integration
+from src.litellm_gigachat.core import get_gigachat_token
+from src.litellm_gigachat.callbacks import setup_litellm_gigachat_integration
 
 # Настройка
 setup_litellm_gigachat_integration()
 
 # Использование
 import litellm
+
 response = litellm.completion(
     model="openai/GigaChat",
     api_base="https://gigachat.devices.sberbank.ru/api/v1",

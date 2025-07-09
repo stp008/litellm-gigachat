@@ -183,15 +183,18 @@ python -m pytest tests/ --cov=src --cov-report=html
 ```
 
 **Написание тестов:**
+
 ```python
 import pytest
-from src.core.token_manager import TokenManager
+from src.litellm_gigachat.core import TokenManager
+
 
 def test_token_manager_initialization():
     """Тест инициализации TokenManager."""
     manager = TokenManager()
     assert manager is not None
     assert not manager.has_token()
+
 
 def test_token_refresh():
     """Тест обновления токена."""
@@ -202,7 +205,7 @@ def test_token_refresh():
             'access_token': 'test_token',
             'expires_at': int(time.time()) + 1800
         }
-        
+
         token = manager.get_token(force_refresh=True)
         assert token == 'test_token'
 ```

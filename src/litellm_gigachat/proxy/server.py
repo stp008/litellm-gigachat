@@ -148,7 +148,7 @@ def setup_gigachat_integration() -> bool:
 def start_proxy_server(
     host: str = "0.0.0.0",
     port: int = 4000,
-    config_file: str = "config.yml",
+    config_file: str = "../config.yml",
 ) -> bool:
     """Запускает LiteLLM Proxy, возвращает True при успешном старте."""
 
