@@ -1,0 +1,67 @@
+# Robots.txt для LiteLLM GigaChat Integration Documentation
+# https://stp008.github.io/litellm-gigachat/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://stp008.github.io/litellm-gigachat/sitemap.xml
+
+# Приоритетные страницы для индексации
+Allow: /index.html
+Allow: /README.html
+Allow: /FAQ.html
+Allow: /GIGACHAT_COMPATIBILITY.html
+Allow: /TEST_REQUESTS.html
+
+# Разрешить индексацию изображений
+Allow: /images/
+
+# Специальные директивы для основных поисковых систем
+
+# Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Yandex (важно для российской аудитории)
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 1
+
+# Bing
+User-agent: bingbot
+Allow: /
+Crawl-delay: 1
+
+# Дополнительные поисковые системы
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# Социальные сети для превью
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Блокировать нежелательных ботов
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Комментарии для SEO
+# Этот сайт содержит документацию по интеграции LiteLLM с GigaChat API
+# Ключевые слова: litellm, gigachat, api, proxy, ai, chatbot, sber, russian-ai
+# Целевая аудитория: разработчики, AI-инженеры, российское IT-сообщество
