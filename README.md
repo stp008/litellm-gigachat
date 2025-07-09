@@ -1,4 +1,4 @@
-# LiteLLM GigaChat Integration | Полная интеграция API Сбер GigaChat с LiteLLM
+# LiteLLM GigaChat Integration | Интеграция GigaChat с LiteLLM
 
 [![GitHub stars](https://img.shields.io/github/stars/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/stargazers)
 
