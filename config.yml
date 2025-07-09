@@ -1,4 +1,5 @@
 model_list:
+  # Официальные модели GigaChat (с токенами)
   - model_name: gigachat                 # публичное имя (как увидит клиент)
     litellm_params:
       model: openai/GigaChat
@@ -18,9 +19,31 @@ model_list:
       api_key: "auto"                    # токен будет автоматически обновляться через callback
       timeout: 60
 
+  # Внутренние модели GigaChat (с заголовками)
+  # Включаются автоматически при GIGACHAT_INTERNAL_ENABLED=true
+  - model_name: gigachat-internal        # внутренняя установка основной модели
+    litellm_params:
+      model: openai/GigaChat
+      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+      api_key: "none"                    # не используется для внутренних моделей
+      timeout: 60
+  - model_name: gigachat-pro-internal    # внутренняя установка pro модели
+    litellm_params:
+      model: openai/GigaChat-2-Pro
+      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+      api_key: "none"                    # не используется для внутренних моделей
+      timeout: 60
+  - model_name: gigachat-max-internal    # внутренняя установка max модели
+    litellm_params:
+      model: openai/GigaChat-2-Max
+      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+      api_key: "none"                    # не используется для внутренних моделей
+      timeout: 60
+
 litellm_settings:
   set_verbose: True
   ssl_verify: false
   callbacks:
     - src.litellm_gigachat.callbacks.content_handler.gigachat_transformer_instance
     - src.litellm_gigachat.callbacks.token_callback.gigachat_callback_instance
+    - src.litellm_gigachat.callbacks.internal_header_callback.internal_header_callback_instance
