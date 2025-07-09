@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "litellm-gigachat"
-version = "0.1.1"
+version = "0.1.4"
 description = "Полнофункциональная интеграция GigaChat API с LiteLLM"
 readme = "README.md"
 license = "MIT"
@@ -46,6 +46,7 @@ dependencies = [
     "requests>=2.31.0,<3.0.0",
     "certifi>=2023.7.22",
     "python-dotenv>=1.0.0,<2.0.0",
+    "click>=8.0.0,<9.0.0",
 ]
 
 [project.urls]
@@ -55,7 +56,7 @@ Repository = "https://github.com/stp008/litellm-gigachat.git"
 "Bug Tracker" = "https://github.com/stp008/litellm-gigachat/issues"
 
 [project.scripts]
-litellm-gigachat = "litellm_gigachat.proxy.server:main"
+litellm-gigachat = "litellm_gigachat.cli.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

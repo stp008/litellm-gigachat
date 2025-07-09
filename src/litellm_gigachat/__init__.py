@@ -28,7 +28,7 @@ from .callbacks.internal_header_callback import (
 from .proxy import start_proxy_server, main
 from .cli.main import cli, main as cli_main
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "LiteLLM GigaChat Team"
 
 __all__ = [
