@@ -1,6 +1,8 @@
 # Интеграция GigaChat с LiteLLM
 
 [![GitHub stars](https://img.shields.io/github/stars/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/stargazers)
+[![PyPI version](https://img.shields.io/pypi/v/litellm-gigachat.svg)](https://pypi.org/project/litellm-gigachat/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/litellm-gigachat.svg)](https://pypi.org/project/litellm-gigachat/)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.1-green.svg)](https://github.com/BerriAI/litellm)
@@ -20,26 +22,63 @@
 -  **Совместимость с Cline** 
 -  **Streaming поддержка**
 
-## 📦 Быстрая установка
+## 📦 Установка
+
+### Через pip (рекомендуется)
+
+```bash
+# Установка пакета
+pip install litellm-gigachat
+
+# Проверка установки
+litellm-gigachat --version
+```
+
+### Из исходников (для разработки)
 
 ```bash
 # 1. Клонирование репозитория
 git clone https://github.com/stp008/litellm-gigachat.git
 cd litellm-gigachat
 
-# 2. Установка зависимостей
-pip install -r requirements.txt
+# 2. Установка в режиме разработки
+pip install -e .
 
-# 3. Настройка ключа API
-export GIGACHAT_AUTH_KEY="ваш_authorization_key"
-
-# 4. Запуск прокси-сервера
-python start_proxy.py
+# 3. Проверка установки
+litellm-gigachat --version
 ```
 
 ## 🎯 Быстрый старт
 
-### Использование через OpenAI API
+### 1. Настройка API ключа
+
+```bash
+# Установите ваш authorization key от GigaChat
+export GIGACHAT_AUTH_KEY="ваш_authorization_key"
+```
+
+### 2. Запуск прокси-сервера
+
+```bash
+# Через установленный пакет (рекомендуется)
+litellm-gigachat
+
+# Через исходники (для разработки)
+python tools/start_proxy.py
+
+# С кастомными параметрами (только для установленного пакета)
+litellm-gigachat --host 127.0.0.1 --port 8000
+
+# С кастомным файлом конфигурации
+litellm-gigachat --config my_config.yml
+
+# Справка по командам
+litellm-gigachat --help
+```
+
+**Примечание:** Если вы работаете с исходниками проекта (клонировали репозиторий), используйте `python tools/start_proxy.py`. Если установили пакет через pip, используйте команду `litellm-gigachat`.
+
+### 3. Использование через OpenAI API
 
 ```python
 import openai
@@ -52,6 +91,27 @@ client = openai.OpenAI(
 response = client.chat.completions.create(
     model="gigachat",
     messages=[{"role": "user", "content": "Привет, GigaChat!"}]
+)
+
+print(response.choices[0].message.content)
+```
+
+### 4. Использование через LiteLLM (программно)
+
+```python
+import litellm_gigachat
+
+# Автоматическая настройка интеграции
+litellm_gigachat.setup_litellm_gigachat_integration()
+
+# Использование через LiteLLM
+import litellm
+
+response = litellm.completion(
+    model="openai/GigaChat",
+    api_base="https://gigachat.devices.sberbank.ru/api/v1",
+    api_key=litellm_gigachat.get_gigachat_token(),
+    messages=[{"role": "user", "content": "Привет!"}]
 )
 
 print(response.choices[0].message.content)
@@ -91,6 +151,39 @@ print(response.choices[0].message.content)
 python test_cline_integration.py
 ```
 
+## 🔧 CLI команды
+
+После установки пакета доступна команда `litellm-gigachat` для управления прокси-сервером:
+
+### Основные команды
+
+| Команда | Описание |
+|---------|----------|
+| `litellm-gigachat` | Запуск прокси-сервера с настройками по умолчанию |
+| `litellm-gigachat --help` | Показать справку по всем доступным параметрам |
+| `litellm-gigachat --version` | Показать версию пакета |
+
+### Параметры командной строки
+
+| Параметр | Описание | По умолчанию |
+|----------|----------|--------------|
+| `--host` | Хост для прокси-сервера | `0.0.0.0` |
+| `--port` | Порт для прокси-сервера | `4000` |
+| `--config` | Путь к файлу конфигурации | `config.yml` |
+
+### Примеры использования
+
+```bash
+# Запуск на localhost с портом 8000
+litellm-gigachat --host 127.0.0.1 --port 8000
+
+# Использование кастомного файла конфигурации
+litellm-gigachat --config /path/to/my_config.yml
+
+# Запуск только на локальном интерфейсе
+litellm-gigachat --host localhost --port 3000
+```
+
 ## 📊 Доступные модели
 
 | Модель API | Описание |
@@ -101,28 +194,114 @@ python test_cline_integration.py
 
 ## 🧪 Тестирование
 
+### После установки через pip
+
+```bash
+# Проверка версии и CLI
+litellm-gigachat --version
+litellm-gigachat --help
+
+# Запуск прокси-сервера (требует GIGACHAT_AUTH_KEY)
+export GIGACHAT_AUTH_KEY="ваш_ключ"
+litellm-gigachat
+
+# Тестирование через curl (в другом терминале)
+curl -X POST http://localhost:4000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer any-key" \
+  -d '{
+    "model": "gigachat",
+    "messages": [{"role": "user", "content": "Привет!"}]
+  }'
+```
+
+### При разработке из исходников
+
 ```bash
 # Базовая функциональность
-python gigachat.py
+python tests/test_basic_functionality.py
 
 # Интеграция с Cline
-python test_cline_integration.py
+python tests/test_cline_integration.py
 
 # Интерактивные примеры
-python examples.py
+python examples/basic_usage.py
+
+# Все тесты
+python -m pytest tests/
+```
+
+### Быстрая проверка работоспособности
+
+```python
+# test_quick.py
+import openai
+
+client = openai.OpenAI(
+    base_url="http://localhost:4000",
+    api_key="test-key"
+)
+
+try:
+    response = client.chat.completions.create(
+        model="gigachat",
+        messages=[{"role": "user", "content": "Тест"}]
+    )
+    print("✅ Интеграция работает!")
+    print(f"Ответ: {response.choices[0].message.content}")
+except Exception as e:
+    print(f"❌ Ошибка: {e}")
 ```
 
 ## 🚨 Устранение неполадок
 
 ### Ошибка "Authorization key не найден"
 ```bash
+# Установите переменную окружения
 export GIGACHAT_AUTH_KEY="ваш_ключ"
+
+# Проверьте, что ключ установлен
+echo $GIGACHAT_AUTH_KEY
+```
+
+### Проблемы с CLI командой
+```bash
+# Проверьте, что пакет установлен
+pip list | grep litellm-gigachat
+
+# Переустановите пакет при необходимости
+pip install --upgrade litellm-gigachat
+
+# Проверьте версию
+litellm-gigachat --version
+```
+
+### Проблемы с прокси-сервером
+```bash
+# Убедитесь, что прокси запущен
+litellm-gigachat
+
+# Проверьте, что порт свободен
+lsof -i :4000
+
+# Запустите на другом порту
+litellm-gigachat --port 8000
 ```
 
 ### Проблемы с Cline
-- Убедитесь, что прокси запущен: `python start_proxy.py`
+- Убедитесь, что прокси запущен: `litellm-gigachat`
 - Проверьте URL: `http://localhost:4000`
-- Тест интеграции: `python test_cline_integration.py`
+- Проверьте, что порт доступен: `curl http://localhost:4000/health`
+- Тест интеграции: `python tests/test_cline_integration.py`
+
+### Проблемы с сертификатами
+```bash
+# Проверьте подключение к GigaChat API
+curl -k https://gigachat.devices.sberbank.ru/api/v1/models
+
+# При проблемах с SSL попробуйте переустановить certifi
+pip install --upgrade certifi
+```
 
 Полное руководство: **[❓ FAQ](docs/FAQ.md)**
 
@@ -134,4 +313,4 @@ export GIGACHAT_AUTH_KEY="ваш_ключ"
 
 ---
 
-**Лицензия**: MIT | **Поддерживаемые версии**: Python 3.8+ 
+**Лицензия**: MIT | **Поддерживаемые версии**: Python 3.8+
