@@ -219,9 +219,6 @@ export GIGACHAT_AUTH_HEADER_NAME=X-Client-Id
 
 # Значение заголовка аутентификации (обязательно)
 export GIGACHAT_AUTH_HEADER_VALUE=bddcba1a-6139-4b5f-9994-90f1b74e9109
-
-# Суффикс для названий моделей (по умолчанию: internal)
-export GIGACHAT_INTERNAL_MODEL_SUFFIX=internal
 ```
 
 ### Использование внутренних моделей
@@ -272,9 +269,6 @@ export GIGACHAT_INTERNAL_ENABLED=true
 export GIGACHAT_INTERNAL_URL=https://internal-ai.company.ru/v2
 export GIGACHAT_AUTH_HEADER_NAME=Authorization-Key
 export GIGACHAT_AUTH_HEADER_VALUE=secret-key-123
-export GIGACHAT_INTERNAL_MODEL_SUFFIX=custom
-
-# Доступные модели: gigachat-custom, gigachat-pro-custom, gigachat-max-custom
 ```
 
 ## 🧪 Тестирование
