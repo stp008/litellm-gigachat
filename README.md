@@ -2,7 +2,6 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/stargazers)
 [![PyPI version](https://img.shields.io/pypi/v/litellm-gigachat.svg)](https://pypi.org/project/litellm-gigachat/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/litellm-gigachat.svg)](https://pypi.org/project/litellm-gigachat/)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.1-green.svg)](https://github.com/BerriAI/litellm)
