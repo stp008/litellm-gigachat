@@ -433,7 +433,7 @@
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Привет! Я GigaChat, языковая модель от Сбера. Как дела? Чем могу помочь?",
+        "content": "Привет! Я GigaChat, языковая модель от ***. Как дела? Чем могу помочь?",
         "function_call": null
       },
       "finish_reason": "stop"
@@ -462,7 +462,7 @@
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Привет! Я GigaChat, языковая модель от Сбера. Как дела? Чем могу помочь?"
+        "content": "Привет! Я GigaChat, языковая модель от ***. Как дела? Чем могу помочь?"
       },
       "finish_reason": "stop"
     }

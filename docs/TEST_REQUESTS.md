@@ -185,7 +185,7 @@ http POST localhost:4000/v1/chat/completions \
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Привет! Я GigaChat, языковая модель от Сбера. Как дела?"
+        "content": "Привет! Я GigaChat, языковая модель от ***. Как дела?"
       },
       "finish_reason": "stop"
     }

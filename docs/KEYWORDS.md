@@ -5,12 +5,12 @@
 ### Русскоязычные
 - `litellm gigachat`
 - `gigachat api интеграция`
-- `сбер gigachat proxy`
+- `gigachat proxy`
 - `gigachat openai совместимость`
 - `cline gigachat настройка`
 - `российская языковая модель`
 - `gigachat python библиотека`
-- `сбербанк ai api`
+- `ai api`
 - `gigachat litellm прокси`
 - `русский chatgpt аналог`
 

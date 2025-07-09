@@ -2,7 +2,7 @@
 
 # Site settings
 title: "LiteLLM GigaChat Integration"
-description: "Полная интеграция российской языковой модели Сбер GigaChat с экосистемой LiteLLM"
+description: "Полная интеграция российской языковой модели GigaChat с экосистемой LiteLLM"
 baseurl: "/litellm-gigachat"
 url: "https://stp008.github.io"
 
