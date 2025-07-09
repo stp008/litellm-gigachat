@@ -64,10 +64,10 @@ print(response.choices[0].message.content)
 Допустимо использовать сервер как в качестве OpenAI совместимого провайдера, так и в качестве LiteLLM провайдера. В случае использования второго варианта появляется больше доступных опций.
 
 ##### Настройки OpenAI Compatible провайдера:
-<img src="docs/images/cline-settings-openai.png" alt="Настройки Cline с OpenAI совместимостью" width="400">
+<img src="docs/images/cline-settings-openai.png" alt="Настройки Cline с OpenAI совместимостью" width="450">
 
 ##### Настройка LiteLLM провайдера:
-<img src="docs/images/cline-settings-litellm.png" alt="Настройки Cline через LiteLLM" width="400">
+<img src="docs/images/cline-settings-litellm.png" alt="Настройки Cline через LiteLLM" width="450">
 
 В настройках Cline укажите следующие параметры:
 
