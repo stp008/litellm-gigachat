@@ -1,0 +1,170 @@
+Metadata-Version: 2.4
+Name: litellm-gigachat
+Version: 0.1.0
+Summary: Полнофункциональная интеграция GigaChat API с LiteLLM
+Author-email: LiteLLM GigaChat Team <clack008@gmail.com>
+Maintainer-email: LiteLLM GigaChat Team <clack008@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/stp008/litellm-gigachat
+Project-URL: Documentation, https://github.com/stp008/litellm-gigachat/blob/main/docs/README.md
+Project-URL: Repository, https://github.com/stp008/litellm-gigachat.git
+Project-URL: Bug Tracker, https://github.com/stp008/litellm-gigachat/issues
+Keywords: gigachat,litellm,openai,api,proxy,sber,russian,llm,ai,chatbot
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Internet :: WWW/HTTP :: HTTP Servers
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: litellm[proxy]==1.65.1
+Requires-Dist: requests<3.0.0,>=2.31.0
+Requires-Dist: certifi>=2023.7.22
+Requires-Dist: python-dotenv<2.0.0,>=1.0.0
+Dynamic: license-file
+
+# Интеграция GigaChat с LiteLLM
+
+[![GitHub stars](https://img.shields.io/github/stars/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/stargazers)
+
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
+[![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.1-green.svg)](https://github.com/BerriAI/litellm)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GigaChat](https://img.shields.io/badge/GigaChat-API-red.svg)](https://developers.sber.ru/portal/products/gigachat-api)
+
+**Полнофункциональная интеграция GigaChat API с LiteLLM** - готовое решение для подключения российской языковой модели Сбер GigaChat через стандартный OpenAI-совместимый интерфейс. Включает автоматическое обновление токенов, преобразование контента и полную совместимость с AI-ассистентом Cline.
+
+## 📚 Документация
+
+**[Полная документация](docs/README.md)** | **[FAQ](docs/FAQ.md)** | **[Тестовые запросы](docs/TEST_REQUESTS.md)** | **[Причины несовместимости с OpenAI API](docs/GIGACHAT_COMPATIBILITY.md)**
+
+## 🚀 Основные возможности
+
+-  **Автоматическое обновление токенов**
+-  **Автоматическая настройка сертификатов**
+-  **Совместимость с Cline** 
+-  **Streaming поддержка**
+
+## 📦 Быстрая установка
+
+```bash
+# 1. Клонирование репозитория
+git clone https://github.com/stp008/litellm-gigachat.git
+cd litellm-gigachat
+
+# 2. Установка зависимостей
+pip install -r requirements.txt
+
+# 3. Настройка ключа API
+export GIGACHAT_AUTH_KEY="ваш_authorization_key"
+
+# 4. Запуск прокси-сервера
+python start_proxy.py
+```
+
+## 🎯 Быстрый старт
+
+### Использование через OpenAI API
+
+```python
+import openai
+
+client = openai.OpenAI(
+    base_url="http://localhost:4000",
+    api_key="any-key"  # Токен управляется автоматически
+)
+
+response = client.chat.completions.create(
+    model="gigachat",
+    messages=[{"role": "user", "content": "Привет, GigaChat!"}]
+)
+
+print(response.choices[0].message.content)
+```
+
+### Использование через Cline
+
+Допустимо использовать сервер как в качестве OpenAI совместимого провайдера, так и в качестве LiteLLM провайдера. В случае использования второго варианта появляется больше доступных опций.
+
+##### Настройки OpenAI Compatible провайдера:
+<img src="docs/images/cline-settings-openai.png" alt="Настройки Cline с OpenAI совместимостью" width="500">
+
+##### Настройка LiteLLM провайдера:
+<img src="docs/images/cline-settings-litellm.png" alt="Настройки Cline через LiteLLM" width="500">
+
+В настройках Cline укажите следующие параметры:
+
+**Основные настройки:**
+1. **API Provider**: Выберите `OpenAI Compatible` или `LiteLLM` из выпадающего списка
+2. **Base URL**: Введите `http://localhost:4000` (без слэша в конце)
+3. **API Key**: Введите любое значение, например `gigachat-key` (токен управляется автоматически)
+4. **Model**: Выберите одну из моделей:
+   - `gigachat` - основная модель (рекомендуется для начала)
+   - `gigachat-pro` - продвинутая модель для сложных задач
+   - `gigachat-max` - модель с максимальными возможностями
+
+#### 4.3 Дополнительные настройки (опционально)
+
+- **Temperature**: 0.7 (для баланса между креативностью и точностью)
+- **Max Tokens**: 4000 (максимальная длина ответа)
+- **Timeout**: 60 секунд
+
+
+### Тестирование интеграции с Cline
+
+```bash
+python test_cline_integration.py
+```
+
+## 📊 Доступные модели
+
+| Модель API | Описание |
+|------------|----------|
+| `gigachat` | Основная модель для общих задач |
+| `gigachat-pro` | Продвинутая модель для сложных задач |
+| `gigachat-max` | Модель с максимальными возможностями |
+
+## 🧪 Тестирование
+
+```bash
+# Базовая функциональность
+python gigachat.py
+
+# Интеграция с Cline
+python test_cline_integration.py
+
+# Интерактивные примеры
+python examples.py
+```
+
+## 🚨 Устранение неполадок
+
+### Ошибка "Authorization key не найден"
+```bash
+export GIGACHAT_AUTH_KEY="ваш_ключ"
+```
+
+### Проблемы с Cline
+- Убедитесь, что прокси запущен: `python start_proxy.py`
+- Проверьте URL: `http://localhost:4000`
+- Тест интеграции: `python test_cline_integration.py`
+
+Полное руководство: **[❓ FAQ](docs/FAQ.md)**
+
+## 🔗 Полезные ссылки
+
+- **[📚 Полная документация](docs/README.md)** - подробное руководство
+- **[❓ FAQ](docs/FAQ.md)** - часто задаваемые вопросы
+- **[🔧 API Reference](docs/TEST_REQUESTS.md)** - примеры запросов
+
+---
+
+**Лицензия**: MIT | **Поддерживаемые версии**: Python 3.8+ 

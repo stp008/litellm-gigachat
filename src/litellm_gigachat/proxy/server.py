@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import subprocess
@@ -190,6 +191,45 @@ def start_proxy_server(
 
 def main() -> None:  # noqa: D401 — imperative
     """Запускает все проверки и прокси‑сервер."""
+    
+    # Парсинг аргументов командной строки
+    parser = argparse.ArgumentParser(
+        description="LiteLLM прокси-сервер для GigaChat API",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Примеры использования:
+  litellm-gigachat                                    # Запуск с настройками по умолчанию
+  litellm-gigachat --host 127.0.0.1 --port 8000      # Кастомный хост и порт
+  litellm-gigachat --config my_config.yml             # Кастомный файл конфигурации
+        """
+    )
+    
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Хост для прокси-сервера (по умолчанию: 0.0.0.0)"
+    )
+    
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=4000,
+        help="Порт для прокси-сервера (по умолчанию: 4000)"
+    )
+    
+    parser.add_argument(
+        "--config",
+        default="../config.yml",
+        help="Путь к файлу конфигурации (по умолчанию: config.yml)"
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="litellm-gigachat 0.1.0"
+    )
+    
+    args = parser.parse_args()
 
     # Загружаем переменные окружения из .env файла
     load_dotenv()
@@ -203,7 +243,7 @@ def main() -> None:  # noqa: D401 — imperative
     logger.info("Все проверки пройдены, запуск сервера…")
     logger.info("=" * 50)
 
-    if start_proxy_server():
+    if start_proxy_server(host=args.host, port=args.port, config_file=args.config):
         logger.info("Сервер завершил работу")
     else:
         logger.error("Ошибка при работе сервера")
