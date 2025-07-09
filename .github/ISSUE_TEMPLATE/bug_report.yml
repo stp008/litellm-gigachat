@@ -1,0 +1,162 @@
+name: 🐛 Сообщение об ошибке
+description: Создать отчет об ошибке для улучшения проекта
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за сообщение об ошибке! Пожалуйста, заполните форму ниже максимально подробно.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Предварительные проверки
+      description: Перед созданием issue убедитесь, что вы выполнили следующие проверки
+      options:
+        - label: Я проверил существующие [Issues](https://github.com/stp008/litellm-gigachat/issues)
+          required: true
+        - label: Я прочитал [FAQ](https://github.com/stp008/litellm-gigachat/blob/main/FAQ.md)
+          required: true
+        - label: Я использую последнюю версию проекта
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание ошибки
+      description: Четкое и краткое описание проблемы
+      placeholder: Опишите, что пошло не так...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Шаги для воспроизведения
+      description: Пошаговые инструкции для воспроизведения ошибки
+      placeholder: |
+        1. Запустите команду '...'
+        2. Откройте файл '...'
+        3. Нажмите на '...'
+        4. Увидите ошибку
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+      description: Что должно было произойти?
+      placeholder: Опишите ожидаемый результат...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактическое поведение
+      description: Что произошло на самом деле?
+      placeholder: Опишите фактический результат...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Операционная система
+      description: На какой ОС возникла проблема?
+      options:
+        - Windows
+        - macOS
+        - Linux (Ubuntu)
+        - Linux (другой дистрибутив)
+        - Другая
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Версия Python
+      description: Какую версию Python вы используете?
+      placeholder: "например, 3.9.7"
+    validations:
+      required: true
+
+  - type: input
+    id: litellm-version
+    attributes:
+      label: Версия LiteLLM
+      description: Какую версию LiteLLM вы используете?
+      placeholder: "например, 1.65.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи ошибок
+      description: Вставьте полные логи ошибок (если есть)
+      render: shell
+      placeholder: |
+        Вставьте логи здесь...
+        
+        Для получения подробных логов запустите:
+        PYTHONPATH=. python start_proxy.py --verbose
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Конфигурация
+      description: Поделитесь вашей конфигурацией (без секретных ключей!)
+      render: yaml
+      placeholder: |
+        # config.yml (без секретных данных)
+        model_list:
+          - model_name: gigachat
+            litellm_params:
+              model: openai/GigaChat
+              # ...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Дополнительная информация
+      description: Любая дополнительная информация, скриншоты, связанные issues и т.д.
+      placeholder: |
+        - Скриншоты (если применимо)
+        - Связанные issues
+        - Возможные причины
+        - Попытки решения
+
+  - type: checkboxes
+    id: component
+    attributes:
+      label: Затронутые компоненты
+      description: Какие части проекта затронуты? (выберите все подходящие)
+      options:
+        - label: 🔐 Управление токенами (TokenManager)
+        - label: 🌐 Прокси-сервер (LiteLLM Proxy)
+        - label: 📋 Обработка контента (FlattenContentHandler)
+        - label: 🤖 Интеграция с Cline
+        - label: 🔄 Трансформация API (OpenAI ↔ GigaChat)
+        - label: 🧪 Тестирование
+        - label: 📖 Документация
+        - label: ⚙️ Конфигурация
+        - label: 🚀 Установка/развертывание
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Приоритет
+      description: Как сильно эта ошибка влияет на вашу работу?
+      options:
+        - "🔴 Критический - проект не работает"
+        - "🟠 Высокий - серьезно влияет на функциональность"
+        - "🟡 Средний - влияет на некоторые функции"
+        - "🟢 Низкий - незначительная проблема"
+    validations:
+      required: true

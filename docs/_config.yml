@@ -1,0 +1,74 @@
+# GitHub Pages Configuration for LiteLLM GigaChat Integration Documentation
+
+# Site settings
+title: "LiteLLM GigaChat Integration"
+description: "Полная интеграция российской языковой модели Сбер GigaChat с экосистемой LiteLLM"
+baseurl: "/litellm-gigachat"
+url: "https://stp008.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# SEO settings
+lang: ru
+author: stp008
+twitter:
+  username: stp008
+social:
+  name: LiteLLM GigaChat Integration
+  links:
+    - https://github.com/stp008/litellm-gigachat
+
+# Navigation
+header_pages:
+  - README.md
+  - FAQ.md
+  - GIGACHAT_COMPATIBILITY.md
+  - TEST_REQUESTS.md
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Include
+include:
+  - _pages
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
