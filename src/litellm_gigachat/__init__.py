@@ -16,7 +16,7 @@ from .callbacks import (
 )
 from .proxy import start_proxy_server, main
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "LiteLLM GigaChat Team"
 
 __all__ = [

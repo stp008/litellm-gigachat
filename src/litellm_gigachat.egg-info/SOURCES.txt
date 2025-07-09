@@ -17,6 +17,7 @@ docs/images/cline-settings-litellm.png
 docs/images/cline-settings-openai.png
 examples/__init__.py
 examples/basic_usage.py
+examples/examples.py
 examples/gigachat_transformer_example.py
 src/litellm_gigachat/__init__.py
 src/litellm_gigachat.egg-info/PKG-INFO
@@ -34,7 +35,6 @@ src/litellm_gigachat/core/token_manager.py
 src/litellm_gigachat/proxy/__init__.py
 src/litellm_gigachat/proxy/server.py
 tests/__init__.py
-tests/examples.py
 tests/gigachat.py
 tests/test_basic_functionality.py
 tests/test_cline_integration.py

@@ -226,7 +226,7 @@ def main() -> None:  # noqa: D401 — imperative
     parser.add_argument(
         "--version",
         action="version",
-        version="litellm-gigachat 0.1.0"
+        version="litellm-gigachat 0.1.1"
     )
     
     args = parser.parse_args()
