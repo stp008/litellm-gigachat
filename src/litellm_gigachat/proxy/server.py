@@ -149,7 +149,9 @@ def setup_gigachat_integration() -> bool:
 def start_proxy_server(
     host: str = "0.0.0.0",
     port: int = 4000,
-    config_file: str = "../config.yml",
+    config_file: str = "config.yml",
+    verbose: bool = False,
+    debug: bool = False,
 ) -> bool:
     """Запускает LiteLLM Proxy, возвращает True при успешном старте."""
 
@@ -157,10 +159,15 @@ def start_proxy_server(
         logger.error("Конфигурационный файл %s не найден!", config_file)
         return False
 
-    logger.info("Запуск LiteLLM прокси‑сервера…")
-    logger.info("  Host: %s", host)
-    logger.info("  Port: %s", port)
-    logger.info("  Config: %s", config_file)
+    if verbose or debug:
+        logger.info("Запуск LiteLLM прокси‑сервера…")
+        logger.info("  Host: %s", host)
+        logger.info("  Port: %s", port)
+        logger.info("  Config: %s", config_file)
+        if debug:
+            logger.info("  Debug mode: enabled")
+        if verbose:
+            logger.info("  Verbose mode: enabled")
 
     # Ключевое исправление — вызываем CLI‑скрипт `litellm`
     cmd: list[str] = [
@@ -171,10 +178,16 @@ def start_proxy_server(
         host,
         "--port",
         str(port),
-        "--detailed_debug",
     ]
+    
+    # Добавляем debug флаги если нужно
+    if debug:
+        cmd.append("--detailed_debug")
+    elif verbose:
+        cmd.append("--debug")
 
-    logger.info("Выполнение команды: %s", " ".join(cmd))
+    if verbose or debug:
+        logger.info("Выполнение команды: %s", " ".join(cmd))
 
     try:
         subprocess.run(cmd, check=True)
@@ -226,7 +239,7 @@ def main() -> None:  # noqa: D401 — imperative
     parser.add_argument(
         "--version",
         action="version",
-        version="litellm-gigachat 0.1.1"
+        version="litellm-gigachat 0.1.3"
     )
     
     args = parser.parse_args()

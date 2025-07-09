@@ -26,8 +26,9 @@ from .callbacks.internal_header_callback import (
     setup_litellm_internal_gigachat_integration
 )
 from .proxy import start_proxy_server, main
+from .cli.main import cli, main as cli_main
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 __author__ = "LiteLLM GigaChat Team"
 
 __all__ = [
