@@ -120,16 +120,16 @@ print(response.choices[0].message.content)
 
 Допустимо использовать сервер как в качестве OpenAI совместимого провайдера, так и в качестве LiteLLM провайдера. В случае использования второго варианта появляется больше доступных опций.
 
+##### Настройка LiteLLM провайдера (рекомендуется):
+<img src="docs/images/cline-settings-litellm.png" alt="Настройки Cline через LiteLLM" width="500">
+
 ##### Настройки OpenAI Compatible провайдера:
 <img src="docs/images/cline-settings-openai.png" alt="Настройки Cline с OpenAI совместимостью" width="500">
-
-##### Настройка LiteLLM провайдера:
-<img src="docs/images/cline-settings-litellm.png" alt="Настройки Cline через LiteLLM" width="500">
 
 В настройках Cline укажите следующие параметры:
 
 **Основные настройки:**
-1. **API Provider**: Выберите `OpenAI Compatible` или `LiteLLM` из выпадающего списка
+1. **API Provider**: Выберите `LiteLLM` или `OpenAI Compatible` из выпадающего списка
 2. **Base URL**: Введите `http://localhost:4000` (без слэша в конце)
 3. **API Key**: Введите любое значение, например `gigachat-key` (токен управляется автоматически)
 4. **Model**: Выберите одну из моделей:
