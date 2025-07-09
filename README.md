@@ -1,16 +1,11 @@
 # LiteLLM GigaChat Integration | Полная интеграция API Сбер GigaChat с LiteLLM
 
 [![GitHub stars](https://img.shields.io/github/stars/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/stp008/litellm-gigachat?style=social)](https://github.com/stp008/litellm-gigachat/network/members)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
 [![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.1-green.svg)](https://github.com/BerriAI/litellm)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GigaChat](https://img.shields.io/badge/GigaChat-API-red.svg)](https://developers.sber.ru/portal/products/gigachat-api)
-
-[![GitHub issues](https://img.shields.io/github/issues/stp008/litellm-gigachat)](https://github.com/stp008/litellm-gigachat/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/stp008/litellm-gigachat)](https://github.com/stp008/litellm-gigachat/pulls)
-[![GitHub last commit](https://img.shields.io/github/last-commit/stp008/litellm-gigachat)](https://github.com/stp008/litellm-gigachat/commits/main)
 
 **Полнофункциональная интеграция GigaChat API с LiteLLM** - готовое решение для подключения российской языковой модели Сбер GigaChat через стандартный OpenAI-совместимый интерфейс. Включает автоматическое обновление токенов, преобразование контента и полную совместимость с AI-ассистентом Cline.
 
