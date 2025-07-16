@@ -153,12 +153,25 @@ def start_proxy_server(
     verbose: bool = False,
     debug: bool = False,
 ) -> bool:
-    """Запускает LiteLLM Proxy, возвращает True при успешном старте."""
+    """Выполняет все проверки и запускает LiteLLM Proxy."""
 
+    logger.info("🚀 Запуск LiteLLM прокси‑сервера для GigaChat")
+    logger.info("=" * 50)
+
+    # 1. Предварительные проверки
+    if not (check_environment() and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
+        logger.error("Предварительные проверки не пройдены. Запуск отменен.")
+        return False
+
+    logger.info("✓ Все проверки пройдены, запуск сервера…")
+    logger.info("=" * 50)
+
+    # 2. Проверка файла конфигурации
     if not Path(config_file).exists():
         logger.error("Конфигурационный файл %s не найден!", config_file)
         return False
 
+    # 3. Логирование параметров запуска
     if verbose or debug:
         logger.info("Запуск LiteLLM прокси‑сервера…")
         logger.info("  Host: %s", host)
@@ -169,7 +182,7 @@ def start_proxy_server(
         if verbose:
             logger.info("  Verbose mode: enabled")
 
-    # Ключевое исправление — вызываем CLI‑скрипт `litellm`
+    # 4. Сборка команды запуска
     cmd: list[str] = [
         "litellm",  # console‑script, попадающий в venv/bin
         "--config",
@@ -189,6 +202,7 @@ def start_proxy_server(
     if verbose or debug:
         logger.info("Выполнение команды: %s", " ".join(cmd))
 
+    # 5. Запуск процесса
     try:
         subprocess.run(cmd, check=True)
         return True
@@ -203,8 +217,11 @@ def start_proxy_server(
 # ────────────────────────────────────────────  Точка входа ────────────────────────────────────────────
 
 def main() -> None:  # noqa: D401 — imperative
-    """Запускает все проверки и прокси‑сервер."""
+    """Парсит аргументы и запускает прокси-сервер."""
     
+    # Загружаем переменные окружения из .env файла
+    load_dotenv()
+
     # Парсинг аргументов командной строки
     parser = argparse.ArgumentParser(
         description="LiteLLM прокси-сервер для GigaChat API",
@@ -214,6 +231,8 @@ def main() -> None:  # noqa: D401 — imperative
   litellm-gigachat                                    # Запуск с настройками по умолчанию
   litellm-gigachat --host 127.0.0.1 --port 8000      # Кастомный хост и порт
   litellm-gigachat --config my_config.yml             # Кастомный файл конфигурации
+  litellm-gigachat --verbose                          # Включить подробный вывод
+  litellm-gigachat --debug                            # Включить режим отладки
         """
     )
     
@@ -237,6 +256,18 @@ def main() -> None:  # noqa: D401 — imperative
     )
     
     parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Включить подробный вывод (эквивалент --debug для litellm)"
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Включить режим отладки (эквивалент --detailed_debug для litellm)"
+    )
+
+    parser.add_argument(
         "--version",
         action="version",
         version="litellm-gigachat 0.1.4"
@@ -244,19 +275,13 @@ def main() -> None:  # noqa: D401 — imperative
     
     args = parser.parse_args()
 
-    # Загружаем переменные окружения из .env файла
-    load_dotenv()
-
-    logger.info("🚀 Запуск LiteLLM прокси‑сервера для GigaChat")
-    logger.info("=" * 50)
-
-    if not (check_environment() and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
-        sys.exit(1)
-
-    logger.info("Все проверки пройдены, запуск сервера…")
-    logger.info("=" * 50)
-
-    if start_proxy_server(host=args.host, port=args.port, config_file=args.config):
+    if start_proxy_server(
+        host=args.host,
+        port=args.port,
+        config_file=args.config,
+        verbose=args.verbose,
+        debug=args.debug
+    ):
         logger.info("Сервер завершил работу")
     else:
         logger.error("Ошибка при работе сервера")
