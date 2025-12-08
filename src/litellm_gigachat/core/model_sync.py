@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Модуль для автоматической синхронизации моделей GigaChat Internal.
+Модуль для автоматической синхронизации моделей прокси-провайдера.
 
-Периодически запрашивает список доступных моделей с внутреннего API GigaChat
+Периодически запрашивает список доступных моделей с кастомного API endpoint
 и динамически обновляет конфигурацию LiteLLM Router без перезапуска сервера.
 """
 
@@ -118,8 +118,9 @@ class ModelSyncManager:
         Преобразовать имя модели из API в формат для LiteLLM.
 
         Примеры:
-            GigaChat-2-Max -> gigachat-2-max-internal
-            GigaChat-Pro -> gigachat-pro-internal
+            GigaChat-2-Max -> gigachat-2-max-proxy
+            llama-3.1-70b -> llama-3.1-70b-proxy
+            mistral-large -> mistral-large-proxy
 
         Args:
             api_model_name: Имя модели из API
@@ -127,15 +128,9 @@ class ModelSyncManager:
         Returns:
             Нормализованное имя модели
         """
-        # Убираем префикс "GigaChat" если есть
-        name = api_model_name
-        if name.startswith("GigaChat-"):
-            name = name[9:]  # Убираем "GigaChat-"
-        elif name.startswith("GigaChat"):
-            name = name[8:]  # Убираем "GigaChat"
-
-        # Приводим к lowercase и добавляем префикс/суффикс
-        normalized = f"{self.model_prefix}{name.lower()}{self.model_suffix}"
+        # Просто приводим к lowercase и добавляем суффикс
+        # Префикс больше не используется
+        normalized = f"{api_model_name.lower()}{self.model_suffix}"
         return normalized
 
     def sync_models(self) -> bool:

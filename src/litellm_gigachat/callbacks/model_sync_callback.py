@@ -46,6 +46,9 @@ def update_models_in_router(models: List[Dict[str, Any]]) -> None:
         
         logger.info(f"Обновление {len(models)} моделей в LiteLLM Router...")
 
+        # Получаем суффикс из переменной окружения
+        model_suffix = os.environ.get("PROXY_PROVIDER_MODEL_SUFFIX", "proxy")
+        
         # Получаем текущий список моделей
         current_model_names = set()
         if llm_model_list:
@@ -54,15 +57,15 @@ def update_models_in_router(models: List[Dict[str, Any]]) -> None:
         # Определяем модели для добавления
         new_model_names = {m.get("model_name") for m in models if m.get("model_name")}
         
-        # Фильтруем только internal модели для синхронизации
-        internal_models = [m for m in models if m.get("model_name", "").endswith("-internal")]
+        # Фильтруем только модели прокси-провайдера для синхронизации
+        proxy_models = [m for m in models if m.get("model_name", "").endswith(f"-{model_suffix}")]
         
-        if not internal_models:
-            logger.debug("Нет internal моделей для синхронизации")
+        if not proxy_models:
+            logger.debug(f"Нет моделей прокси-провайдера (с суффиксом -{model_suffix}) для синхронизации")
             return
 
         # Добавляем/обновляем модели в глобальный список
-        for model_config in internal_models:
+        for model_config in proxy_models:
             model_name = model_config.get("model_name")
             
             # Проверяем, есть ли уже такая модель

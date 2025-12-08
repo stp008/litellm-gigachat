@@ -19,27 +19,21 @@ model_list:
       api_key: "auto"                    # токен будет автоматически обновляться через callback
       timeout: 60
 
-  # Внутренние модели GigaChat (с заголовками)
+  # Модели прокси-провайдера (кастомный API endpoint)
   # При включении MODEL_SYNC_ENABLED=true модели добавляются автоматически
   # Если синхронизация отключена, раскомментируйте модели ниже:
   
-  # - model_name: gigachat-internal        # внутренняя установка основной модели
-  #   litellm_params:
-  #     model: openai/GigaChat
-  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-  #     api_key: "none"                    # не используется для внутренних моделей
-  #     timeout: 60
-  # - model_name: gigachat-pro-internal    # внутренняя установка pro модели
-  #   litellm_params:
-  #     model: openai/GigaChat-2-Pro
-  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-  #     api_key: "none"                    # не используется для внутренних моделей
-  #     timeout: 60
-  # - model_name: gigachat-max-internal    # внутренняя установка max модели
+  # - model_name: gigachat-2-max-proxy     # пример модели через прокси-провайдер
   #   litellm_params:
   #     model: openai/GigaChat-2-Max
-  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-  #     api_key: "none"                    # не используется для внутренних моделей
+  #     api_base: https://my-api.company.com/api/v1  # будет заменен на PROXY_PROVIDER_URL
+  #     api_key: "none"                    # не используется для моделей прокси-провайдера
+  #     timeout: 60
+  # - model_name: llama-3.1-70b-proxy      # пример другой модели
+  #   litellm_params:
+  #     model: openai/llama-3.1-70b
+  #     api_base: https://my-api.company.com/api/v1
+  #     api_key: "none"
   #     timeout: 60
 
 litellm_settings:
@@ -48,4 +42,4 @@ litellm_settings:
   callbacks:
     - src.litellm_gigachat.callbacks.content_handler.gigachat_transformer_instance
     - src.litellm_gigachat.callbacks.token_callback.gigachat_callback_instance
-    - src.litellm_gigachat.callbacks.internal_header_callback.internal_header_callback_instance
+    - src.litellm_gigachat.callbacks.proxy_provider_callback.proxy_provider_callback_instance

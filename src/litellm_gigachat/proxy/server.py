@@ -146,7 +146,7 @@ def setup_gigachat_integration() -> bool:
 
 def setup_model_sync() -> bool:
     """
-    Настройка автоматической синхронизации моделей для внутреннего GigaChat.
+    Настройка автоматической синхронизации моделей для прокси-провайдера.
     
     Returns:
         True если синхронизация настроена успешно, False если отключена или произошла ошибка
@@ -154,30 +154,29 @@ def setup_model_sync() -> bool:
     try:
         # Проверяем, включена ли синхронизация моделей
         model_sync_enabled = os.environ.get("MODEL_SYNC_ENABLED", "false").lower() == "true"
-        internal_enabled = os.environ.get("GIGACHAT_INTERNAL_ENABLED", "false").lower() == "true"
+        proxy_enabled = os.environ.get("PROXY_PROVIDER_ENABLED", "false").lower() == "true"
         
         if not model_sync_enabled:
             logger.info("ℹ️  Автоматическая синхронизация моделей отключена (MODEL_SYNC_ENABLED=false)")
             return True
         
-        if not internal_enabled:
-            logger.warning("⚠️  MODEL_SYNC_ENABLED=true, но GIGACHAT_INTERNAL_ENABLED=false")
-            logger.warning("   Синхронизация моделей работает только с внутренним GigaChat")
+        if not proxy_enabled:
+            logger.warning("⚠️  MODEL_SYNC_ENABLED=true, но PROXY_PROVIDER_ENABLED=false")
+            logger.warning("   Синхронизация моделей работает только с прокси-провайдером")
             return True
         
         # Получаем параметры из переменных окружения
-        api_base = os.environ.get("GIGACHAT_INTERNAL_URL")
-        auth_header_name = os.environ.get("GIGACHAT_AUTH_HEADER_NAME", "X-Client-Id")
-        auth_header_value = os.environ.get("GIGACHAT_AUTH_HEADER_VALUE")
+        api_base = os.environ.get("PROXY_PROVIDER_URL")
+        auth_header_name = os.environ.get("PROXY_PROVIDER_AUTH_HEADER", "X-Client-Id")
+        auth_header_value = os.environ.get("PROXY_PROVIDER_AUTH_VALUE")
         
         if not api_base or not auth_header_value:
-            logger.error("❌ Для синхронизации моделей требуются GIGACHAT_INTERNAL_URL и GIGACHAT_AUTH_HEADER_VALUE")
+            logger.error("❌ Для синхронизации моделей требуются PROXY_PROVIDER_URL и PROXY_PROVIDER_AUTH_VALUE")
             return False
         
         # Получаем дополнительные параметры
         sync_interval = int(os.environ.get("MODEL_SYNC_INTERVAL", "300"))
-        model_prefix = os.environ.get("MODEL_SYNC_PREFIX", "gigachat-")
-        model_suffix = os.environ.get("MODEL_SYNC_SUFFIX", "-internal")
+        model_suffix = os.environ.get("PROXY_PROVIDER_MODEL_SUFFIX", "proxy")
         timeout = int(os.environ.get("GIGACHAT_TIMEOUT", "60"))
         
         # Импортируем модули синхронизации
@@ -185,13 +184,14 @@ def setup_model_sync() -> bool:
         from ..callbacks.model_sync_callback import get_update_callback
         
         # Инициализируем менеджер синхронизации
+        # Префикс больше не используется, передаём пустую строку
         sync_manager = init_global_model_sync_manager(
             api_base=api_base,
             auth_header_name=auth_header_name,
             auth_header_value=auth_header_value,
             sync_interval=sync_interval,
-            model_prefix=model_prefix,
-            model_suffix=model_suffix,
+            model_prefix="",  # Префикс не используется
+            model_suffix=f"-{model_suffix}",
             timeout=timeout,
         )
         
@@ -204,6 +204,7 @@ def setup_model_sync() -> bool:
         logger.info("✓ Автоматическая синхронизация моделей запущена")
         logger.info(f"  Интервал: {sync_interval} секунд")
         logger.info(f"  API: {api_base}")
+        logger.info(f"  Суффикс моделей: -{model_suffix}")
         
         return True
         
