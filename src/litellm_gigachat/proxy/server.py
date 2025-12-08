@@ -133,7 +133,23 @@ def check_dependencies() -> bool:
 
 
 def setup_certificates() -> bool:
-    """Настройка российских доверенных корневых сертификатов."""
+    """
+    Настройка российских доверенных корневых сертификатов.
+    
+    Установка сертификатов опциональна и контролируется переменной окружения INSTALL_RUSSIAN_CERTS.
+    По умолчанию отключена для совместимости с внутренними стендами без интернета.
+    
+    Returns:
+        True всегда (ошибки установки сертификатов не критичны)
+    """
+    # Проверяем, нужно ли устанавливать сертификаты
+    install_certs = os.environ.get("INSTALL_RUSSIAN_CERTS", "false").lower() == "true"
+    
+    if not install_certs:
+        logger.info("ℹ️  Установка российских сертификатов отключена (INSTALL_RUSSIAN_CERTS=false)")
+        logger.info("   Для публичного GigaChat API установите INSTALL_RUSSIAN_CERTS=true")
+        return True
+    
     try:
         # Получаем путь к файлу сертификатов certifi
         cert_file = certifi.where()
@@ -165,8 +181,9 @@ def setup_certificates() -> bool:
             cert_data = result.stdout.strip()
             
             if not cert_data or "BEGIN CERTIFICATE" not in cert_data:
-                logger.error("Получены некорректные данные сертификата")
-                return False
+                logger.warning("⚠️  Получены некорректные данные сертификата")
+                logger.warning("   Продолжаем без установки сертификата")
+                return True
             
             # Добавляем сертификат в файл certifi
             with open(cert_file, 'a', encoding='utf-8') as f:
@@ -179,21 +196,26 @@ def setup_certificates() -> bool:
             return True
             
         except subprocess.TimeoutExpired:
-            logger.error("Таймаут при загрузке сертификата")
-            return False
+            logger.warning("⚠️  Таймаут при загрузке сертификата")
+            logger.warning("   Продолжаем без установки сертификата")
+            return True
         except subprocess.CalledProcessError as proc_exc:
-            logger.error("Ошибка выполнения curl: %s", proc_exc)
-            return False
+            logger.warning(f"⚠️  Ошибка выполнения curl: {proc_exc}")
+            logger.warning("   Продолжаем без установки сертификата")
+            return True
         except PermissionError:
-            logger.error("Нет прав на запись в файл сертификатов: %s", cert_file)
-            return False
+            logger.warning(f"⚠️  Нет прав на запись в файл сертификатов: {cert_file}")
+            logger.warning("   Продолжаем без установки сертификата")
+            return True
         except Exception as write_exc:
-            logger.error("Ошибка записи сертификата: %s", write_exc)
-            return False
+            logger.warning(f"⚠️  Ошибка записи сертификата: {write_exc}")
+            logger.warning("   Продолжаем без установки сертификата")
+            return True
             
     except Exception as exc:  # pylint: disable=broad-except
-        logger.error("Ошибка настройки сертификатов: %s", exc)
-        return False
+        logger.warning(f"⚠️  Ошибка настройки сертификатов: {exc}")
+        logger.warning("   Продолжаем без установки сертификата")
+        return True
 
 
 def setup_gigachat_integration() -> bool:
