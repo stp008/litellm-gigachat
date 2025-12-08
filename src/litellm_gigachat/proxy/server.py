@@ -144,6 +144,74 @@ def setup_gigachat_integration() -> bool:
         return False
 
 
+def setup_model_sync() -> bool:
+    """
+    Настройка автоматической синхронизации моделей для внутреннего GigaChat.
+    
+    Returns:
+        True если синхронизация настроена успешно, False если отключена или произошла ошибка
+    """
+    try:
+        # Проверяем, включена ли синхронизация моделей
+        model_sync_enabled = os.environ.get("MODEL_SYNC_ENABLED", "false").lower() == "true"
+        internal_enabled = os.environ.get("GIGACHAT_INTERNAL_ENABLED", "false").lower() == "true"
+        
+        if not model_sync_enabled:
+            logger.info("ℹ️  Автоматическая синхронизация моделей отключена (MODEL_SYNC_ENABLED=false)")
+            return True
+        
+        if not internal_enabled:
+            logger.warning("⚠️  MODEL_SYNC_ENABLED=true, но GIGACHAT_INTERNAL_ENABLED=false")
+            logger.warning("   Синхронизация моделей работает только с внутренним GigaChat")
+            return True
+        
+        # Получаем параметры из переменных окружения
+        api_base = os.environ.get("GIGACHAT_INTERNAL_URL")
+        auth_header_name = os.environ.get("GIGACHAT_AUTH_HEADER_NAME", "X-Client-Id")
+        auth_header_value = os.environ.get("GIGACHAT_AUTH_HEADER_VALUE")
+        
+        if not api_base or not auth_header_value:
+            logger.error("❌ Для синхронизации моделей требуются GIGACHAT_INTERNAL_URL и GIGACHAT_AUTH_HEADER_VALUE")
+            return False
+        
+        # Получаем дополнительные параметры
+        sync_interval = int(os.environ.get("MODEL_SYNC_INTERVAL", "300"))
+        model_prefix = os.environ.get("MODEL_SYNC_PREFIX", "gigachat-")
+        model_suffix = os.environ.get("MODEL_SYNC_SUFFIX", "-internal")
+        timeout = int(os.environ.get("GIGACHAT_TIMEOUT", "60"))
+        
+        # Импортируем модули синхронизации
+        from ..core.model_sync import init_global_model_sync_manager
+        from ..callbacks.model_sync_callback import get_update_callback
+        
+        # Инициализируем менеджер синхронизации
+        sync_manager = init_global_model_sync_manager(
+            api_base=api_base,
+            auth_header_name=auth_header_name,
+            auth_header_value=auth_header_value,
+            sync_interval=sync_interval,
+            model_prefix=model_prefix,
+            model_suffix=model_suffix,
+            timeout=timeout,
+        )
+        
+        # Устанавливаем callback для обновления моделей
+        sync_manager.set_update_callback(get_update_callback())
+        
+        # Запускаем фоновую синхронизацию
+        sync_manager.start()
+        
+        logger.info("✓ Автоматическая синхронизация моделей запущена")
+        logger.info(f"  Интервал: {sync_interval} секунд")
+        logger.info(f"  API: {api_base}")
+        
+        return True
+        
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.error(f"Ошибка настройки синхронизации моделей: {exc}")
+        return False
+
+
 # ─────────────────────────────────────────────  Запуск прокси ─────────────────────────────────────────────
 
 def start_proxy_server(
@@ -161,6 +229,11 @@ def start_proxy_server(
     # 1. Предварительные проверки
     if not (check_environment() and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
         logger.error("Предварительные проверки не пройдены. Запуск отменен.")
+        return False
+
+    # 2. Настройка синхронизации моделей (если включена)
+    if not setup_model_sync():
+        logger.error("Ошибка настройки синхронизации моделей. Запуск отменен.")
         return False
 
     logger.info("✓ Все проверки пройдены, запуск сервера…")

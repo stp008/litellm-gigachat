@@ -12,6 +12,7 @@ from ...proxy.server import (
     check_dependencies,
     setup_certificates,
     setup_gigachat_integration,
+    setup_model_sync,
     start_proxy_server
 )
 

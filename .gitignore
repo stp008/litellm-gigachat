@@ -120,3 +120,4 @@ litellm-gigachat-debug-*.log
 *.egg-info/
 build/
 dist/
+.aider*

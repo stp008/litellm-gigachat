@@ -20,25 +20,27 @@ model_list:
       timeout: 60
 
   # Внутренние модели GigaChat (с заголовками)
-  # Включаются автоматически при GIGACHAT_INTERNAL_ENABLED=true
-  - model_name: gigachat-internal        # внутренняя установка основной модели
-    litellm_params:
-      model: openai/GigaChat
-      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-      api_key: "none"                    # не используется для внутренних моделей
-      timeout: 60
-  - model_name: gigachat-pro-internal    # внутренняя установка pro модели
-    litellm_params:
-      model: openai/GigaChat-2-Pro
-      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-      api_key: "none"                    # не используется для внутренних моделей
-      timeout: 60
-  - model_name: gigachat-max-internal    # внутренняя установка max модели
-    litellm_params:
-      model: openai/GigaChat-2-Max
-      api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
-      api_key: "none"                    # не используется для внутренних моделей
-      timeout: 60
+  # При включении MODEL_SYNC_ENABLED=true модели добавляются автоматически
+  # Если синхронизация отключена, раскомментируйте модели ниже:
+  
+  # - model_name: gigachat-internal        # внутренняя установка основной модели
+  #   litellm_params:
+  #     model: openai/GigaChat
+  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+  #     api_key: "none"                    # не используется для внутренних моделей
+  #     timeout: 60
+  # - model_name: gigachat-pro-internal    # внутренняя установка pro модели
+  #   litellm_params:
+  #     model: openai/GigaChat-2-Pro
+  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+  #     api_key: "none"                    # не используется для внутренних моделей
+  #     timeout: 60
+  # - model_name: gigachat-max-internal    # внутренняя установка max модели
+  #   litellm_params:
+  #     model: openai/GigaChat-2-Max
+  #     api_base: https://my-gigachat.company.com/api/v1  # будет заменен на GIGACHAT_INTERNAL_URL
+  #     api_key: "none"                    # не используется для внутренних моделей
+  #     timeout: 60
 
 litellm_settings:
   set_verbose: True
