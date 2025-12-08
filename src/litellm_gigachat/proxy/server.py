@@ -30,16 +30,86 @@ logger = logging.getLogger(__name__)
 
 # ────────────────────────────────────────  Вспомогательные функции ────────────────────────────────────────
 
-def check_environment() -> bool:
-    """Проверка обязательных переменных окружения."""
-    if "GIGACHAT_AUTH_KEY" not in os.environ:
-        logger.error(
-            "Переменная окружения GIGACHAT_AUTH_KEY не установлена!\n"
-            "export GIGACHAT_AUTH_KEY='ваш_authorization_key'",
-        )
+def has_official_gigachat_models(config_file: str) -> bool:
+    """
+    Проверяет наличие официальных моделей GigaChat в конфигурации.
+    
+    Официальные модели - это модели с api_base содержащим 'gigachat.devices.sberbank.ru'
+    
+    Args:
+        config_file: Путь к файлу конфигурации
+        
+    Returns:
+        True если есть официальные модели GigaChat, False иначе
+    """
+    try:
+        import yaml
+        
+        if not Path(config_file).exists():
+            logger.warning(f"Файл конфигурации {config_file} не найден")
+            return False
+        
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        if not config or 'model_list' not in config:
+            logger.warning("Конфигурация не содержит model_list")
+            return False
+        
+        # Проверяем каждую модель
+        for model in config['model_list']:
+            if not isinstance(model, dict):
+                continue
+            
+            litellm_params = model.get('litellm_params', {})
+            api_base = litellm_params.get('api_base', '')
+            
+            # Проверяем, является ли это официальной моделью GigaChat
+            if 'gigachat.devices.sberbank.ru' in api_base.lower():
+                logger.debug(f"Найдена официальная модель GigaChat: {model.get('model_name', 'unknown')}")
+                return True
+        
+        logger.debug("Официальные модели GigaChat не найдены в конфигурации")
         return False
+        
+    except Exception as exc:
+        logger.error(f"Ошибка при проверке конфигурации: {exc}")
+        # В случае ошибки считаем, что модели есть (безопасный вариант)
+        return True
 
-    logger.info("✓ GIGACHAT_AUTH_KEY найден")
+
+def check_environment(config_file: str) -> bool:
+    """
+    Проверка обязательных переменных окружения.
+    
+    GIGACHAT_AUTH_KEY обязателен только если в конфигурации есть официальные модели GigaChat.
+    
+    Args:
+        config_file: Путь к файлу конфигурации
+        
+    Returns:
+        True если все необходимые переменные установлены, False иначе
+    """
+    # Проверяем, есть ли официальные модели GigaChat в конфигурации
+    has_official_models = has_official_gigachat_models(config_file)
+    
+    if has_official_models:
+        # Если есть официальные модели, GIGACHAT_AUTH_KEY обязателен
+        if "GIGACHAT_AUTH_KEY" not in os.environ:
+            logger.error(
+                "❌ Переменная окружения GIGACHAT_AUTH_KEY не установлена!\n"
+                "   В конфигурации найдены официальные модели GigaChat, требующие аутентификацию.\n"
+                "   export GIGACHAT_AUTH_KEY='ваш_authorization_key'",
+            )
+            return False
+        logger.info("✓ GIGACHAT_AUTH_KEY найден")
+    else:
+        # Если нет официальных моделей, GIGACHAT_AUTH_KEY не обязателен
+        if "GIGACHAT_AUTH_KEY" in os.environ:
+            logger.info("✓ GIGACHAT_AUTH_KEY найден")
+        else:
+            logger.info("ℹ️  GIGACHAT_AUTH_KEY не установлен (не требуется для прокси-моделей)")
+    
     return True
 
 
@@ -127,17 +197,30 @@ def setup_certificates() -> bool:
 
 
 def setup_gigachat_integration() -> bool:
-    """Проверка доступности модулей GigaChat интеграции."""
+    """
+    Проверка доступности модулей GigaChat интеграции.
+    
+    Если GIGACHAT_AUTH_KEY не установлен, token manager не будет инициализирован,
+    но это не критично для работы с прокси-моделями.
+    """
     try:
-        # Просто проверяем, что модули доступны
-        # Callback будет загружен автоматически через config.yml
+        # Проверяем, что модули доступны
         from ..callbacks.token_callback import get_gigachat_callback
         from ..core.token_manager import get_global_token_manager
         
-        # Проверяем, что token manager работает
-        token_manager = get_global_token_manager()
         logger.info("✓ Модули GigaChat интеграции доступны")
-        logger.info("✓ Token manager инициализирован")
+        
+        # Пытаемся инициализировать token manager только если есть GIGACHAT_AUTH_KEY
+        if "GIGACHAT_AUTH_KEY" in os.environ:
+            try:
+                token_manager = get_global_token_manager()
+                logger.info("✓ Token manager инициализирован")
+            except Exception as token_exc:
+                logger.warning(f"⚠️  Не удалось инициализировать token manager: {token_exc}")
+                logger.warning("   Официальные модели GigaChat могут не работать")
+        else:
+            logger.debug("Token manager не инициализирован (GIGACHAT_AUTH_KEY не установлен)")
+        
         return True
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("Ошибка проверки интеграции: %s", exc)
@@ -228,7 +311,7 @@ def start_proxy_server(
     logger.info("=" * 50)
 
     # 1. Предварительные проверки
-    if not (check_environment() and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
+    if not (check_environment(config_file) and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
         logger.error("Предварительные проверки не пройдены. Запуск отменен.")
         return False
 
