@@ -55,6 +55,7 @@ class MultiModelSyncManager:
                 sync_interval=provider.sync_interval,
                 model_suffix=f"-{provider.suffix}",
                 timeout=provider.timeout,
+                provider_name=provider.name
             )
 
             # Устанавливаем callback для обновления моделей
@@ -62,7 +63,6 @@ class MultiModelSyncManager:
                 sync_manager.set_update_callback(self._on_models_updated)
 
             self._sync_managers[provider.name] = sync_manager
-            logger.info(f"✓ Добавлен sync manager для провайдера {provider.name}")
             return True
 
         except Exception as exc:
@@ -88,12 +88,12 @@ class MultiModelSyncManager:
             logger.info("Нет провайдеров для синхронизации")
             return
 
-        logger.info(f"Запуск синхронизации для {len(self._sync_managers)} провайдеров...")
+        logger.info(f"Запуск синхронизации для {len(self._sync_managers)} провайдеров")
 
         for provider_name, sync_manager in self._sync_managers.items():
             try:
                 sync_manager.start()
-                logger.info(f"✓ Синхронизация запущена для провайдера {provider_name}")
+                logger.info(f"Синхронизация запущена для провайдера {provider_name}")
             except Exception as exc:
                 logger.error(f"Ошибка запуска синхронизации для {provider_name}: {exc}")
 
@@ -107,7 +107,7 @@ class MultiModelSyncManager:
         for provider_name, sync_manager in self._sync_managers.items():
             try:
                 sync_manager.stop()
-                logger.info(f"✓ Синхронизация остановлена для провайдера {provider_name}")
+                logger.info(f"Синхронизация остановлена для провайдера {provider_name}")
             except Exception as exc:
                 logger.error(f"Ошибка остановки синхронизации для {provider_name}: {exc}")
 
@@ -163,9 +163,9 @@ class MultiModelSyncManager:
             try:
                 if sync_manager.sync_models():
                     success_count += 1
-                    logger.debug(f"✓ Синхронизация успешна для {provider_name}")
+                    logger.debug(f"Синхронизация успешна для {provider_name}")
                 else:
-                    logger.warning(f"⚠️ Синхронизация не удалась для {provider_name}")
+                    logger.warning(f"Синхронизация не удалась для {provider_name}")
             except Exception as exc:
                 logger.error(f"Ошибка синхронизации для {provider_name}: {exc}")
 

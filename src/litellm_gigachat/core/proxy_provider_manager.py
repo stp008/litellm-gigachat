@@ -79,7 +79,7 @@ class MultiProxyProviderManager:
                     provider = self._parse_provider_config(provider_data)
                     if provider:
                         self.providers.append(provider)
-                        logger.info(f"✓ Загружен провайдер: {provider.name} (суффикс: -{provider.suffix})")
+                        logger.info(f"Загружен провайдер: {provider.name} (суффикс: -{provider.suffix})")
                 except Exception as exc:
                     logger.error(f"Ошибка парсинга провайдера {provider_data.get('name', 'unknown')}: {exc}")
             
@@ -87,7 +87,7 @@ class MultiProxyProviderManager:
                 logger.warning("Не удалось загрузить ни одного провайдера из config.yml")
                 return self._load_legacy_config()
             
-            logger.info(f"✓ Загружено {len(self.providers)} прокси-провайдеров")
+            logger.info(f"Загружено {len(self.providers)} прокси-провайдеров")
             return True
             
         except Exception as exc:

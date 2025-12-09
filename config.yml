@@ -4,25 +4,25 @@
 # Позволяет настроить несколько источников моделей с автоматической синхронизацией
 
 proxy_providers:
-  # Пример 1: Внутренний GigaChat API
-  - name: internal-gigachat              # уникальное имя провайдера
-    url: https://internal-api.company.com/api/v1
-    auth_header: X-Client-Id             # название заголовка аутентификации
-    auth_value: ${INTERNAL_GIGACHAT_AUTH}  # значение из переменной окружения
-    suffix: internal                     # суффикс для моделей (модели будут: model-internal)
-    sync_enabled: true                   # автоматическая синхронизация моделей
-    sync_interval: 300                   # интервал синхронизации в секундах
-    timeout: 60                          # таймаут запросов
-  
-  # Пример 2: Внешний LLM провайдер
-  - name: external-llm
-    url: https://external-llm.company.com/api/v1
-    auth_header: Authorization
-    auth_value: ${EXTERNAL_LLM_TOKEN}
-    suffix: ext                          # модели будут: model-ext
+  # Provider 1: Mock сервер на порту 8001
+  - name: provider1
+    url: http://localhost:8001/v1
+    auth_header: X-Client-Id
+    auth_value: ${PROVIDER1_TOKEN}
+    suffix: p1
     sync_enabled: true
-    sync_interval: 600
-    timeout: 120
+    sync_interval: 30  # Быстрая синхронизация для тестирования
+    timeout: 60
+
+  # Provider 2: Mock сервер на порту 8002
+  - name: provider2
+    url: http://localhost:8002/v1
+    auth_header: X-API-Key
+    auth_value: ${PROVIDER2_TOKEN}
+    suffix: p2
+    sync_enabled: true
+    sync_interval: 30  # Быстрая синхронизация для тестирования
+    timeout: 60
 
 # Примечания:
 # - auth_value поддерживает подстановку переменных окружения: ${VAR_NAME}
@@ -73,7 +73,7 @@ model_list:
 #      timeout: 120
 
 litellm_settings:
-  set_verbose: True
+  set_verbose: false
   ssl_verify: false
   callbacks:
     - src.litellm_gigachat.callbacks.content_handler.gigachat_transformer_instance

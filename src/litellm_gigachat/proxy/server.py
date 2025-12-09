@@ -22,7 +22,10 @@ from pathlib import Path
 import certifi
 
 # ─────────────────────────────────────────  Настройка логов ─────────────────────────────────────────
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Настраиваем логирование только если обработчики ещё не добавлены
+# (LiteLLM добавляет свои обработчики, поэтому избегаем дублирования)
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # ────────────────────────────────────────  Вспомогательные функции ────────────────────────────────────────
@@ -99,13 +102,13 @@ def check_environment(config_file: str) -> bool:
                 "   export GIGACHAT_AUTH_KEY='ваш_authorization_key'",
             )
             return False
-        logger.info("✓ GIGACHAT_AUTH_KEY найден")
+        logger.info("GIGACHAT_AUTH_KEY найден")
     else:
         # Если нет официальных моделей, GIGACHAT_AUTH_KEY не обязателен
         if "GIGACHAT_AUTH_KEY" in os.environ:
             logger.info("✓ GIGACHAT_AUTH_KEY найден")
         else:
-            logger.info("ℹ️  GIGACHAT_AUTH_KEY не установлен (не требуется для прокси-моделей)")
+            logger.info("GIGACHAT_AUTH_KEY не установлен (не требуется для прокси-моделей)")
     
     return True
 
@@ -114,14 +117,14 @@ def check_dependencies() -> bool:
     """Проверка установленных зависимостей."""
     try:
         import litellm  # noqa: F401 — проверка импорта
-        logger.info("✓ LiteLLM версия: %s", metadata.version("litellm"))
+        logger.info("LiteLLM версия: %s", metadata.version("litellm"))
     except ImportError:
         logger.error("LiteLLM не установлен. Установите: pip install 'litellm[proxy]'")
         return False
 
     try:
         import requests  # noqa: F401
-        logger.info("✓ Requests установлен")
+        logger.info("Requests установлен")
     except ImportError:
         logger.error("Requests не установлен. Установите: pip install requests")
         return False
@@ -143,8 +146,8 @@ def setup_certificates() -> bool:
     install_certs = os.environ.get("INSTALL_RUSSIAN_CERTS", "false").lower() == "true"
     
     if not install_certs:
-        logger.info("ℹ️  Установка российских сертификатов отключена (INSTALL_RUSSIAN_CERTS=false)")
-        logger.info("   Для публичного GigaChat API установите INSTALL_RUSSIAN_CERTS=true")
+        logger.info("Установка российских сертификатов отключена (INSTALL_RUSSIAN_CERTS=false)")
+        logger.info("Для публичного GigaChat API установите INSTALL_RUSSIAN_CERTS=true")
         return True
     
     try:
@@ -178,8 +181,8 @@ def setup_certificates() -> bool:
             cert_data = result.stdout.strip()
             
             if not cert_data or "BEGIN CERTIFICATE" not in cert_data:
-                logger.warning("⚠️  Получены некорректные данные сертификата")
-                logger.warning("   Продолжаем без установки сертификата")
+                logger.warning("Получены некорректные данные сертификата")
+                logger.warning("Продолжаем без установки сертификата")
                 return True
             
             # Добавляем сертификат в файл certifi
@@ -189,29 +192,29 @@ def setup_certificates() -> bool:
                 f.write(cert_data)
                 f.write('\n')
             
-            logger.info("✓ Российский корневой сертификат успешно добавлен")
+            logger.info("Российский корневой сертификат успешно добавлен")
             return True
             
         except subprocess.TimeoutExpired:
-            logger.warning("⚠️  Таймаут при загрузке сертификата")
-            logger.warning("   Продолжаем без установки сертификата")
+            logger.warning("Таймаут при загрузке сертификата")
+            logger.warning("Продолжаем без установки сертификата")
             return True
         except subprocess.CalledProcessError as proc_exc:
-            logger.warning(f"⚠️  Ошибка выполнения curl: {proc_exc}")
-            logger.warning("   Продолжаем без установки сертификата")
+            logger.warning(f"Ошибка выполнения curl: {proc_exc}")
+            logger.warning("Продолжаем без установки сертификата")
             return True
         except PermissionError:
-            logger.warning(f"⚠️  Нет прав на запись в файл сертификатов: {cert_file}")
-            logger.warning("   Продолжаем без установки сертификата")
+            logger.warning(f"Нет прав на запись в файл сертификатов: {cert_file}")
+            logger.warning("Продолжаем без установки сертификата")
             return True
         except Exception as write_exc:
-            logger.warning(f"⚠️  Ошибка записи сертификата: {write_exc}")
-            logger.warning("   Продолжаем без установки сертификата")
+            logger.warning(f"Ошибка записи сертификата: {write_exc}")
+            logger.warning("Продолжаем без установки сертификата")
             return True
             
     except Exception as exc:  # pylint: disable=broad-except
-        logger.warning(f"⚠️  Ошибка настройки сертификатов: {exc}")
-        logger.warning("   Продолжаем без установки сертификата")
+        logger.warning(f"Ошибка настройки сертификатов: {exc}")
+        logger.warning("Продолжаем без установки сертификата")
         return True
 
 
@@ -227,16 +230,16 @@ def setup_gigachat_integration() -> bool:
         from ..callbacks.token_callback import get_gigachat_callback
         from ..core.token_manager import get_global_token_manager
         
-        logger.info("✓ Модули GigaChat интеграции доступны")
+        logger.info("Модули GigaChat интеграции доступны")
         
         # Пытаемся инициализировать token manager только если есть GIGACHAT_AUTH_KEY
         if "GIGACHAT_AUTH_KEY" in os.environ:
             try:
                 token_manager = get_global_token_manager()
-                logger.info("✓ Token manager инициализирован")
+                logger.info("Token manager инициализирован")
             except Exception as token_exc:
-                logger.warning(f"⚠️  Не удалось инициализировать token manager: {token_exc}")
-                logger.warning("   Официальные модели GigaChat могут не работать")
+                logger.warning(f"Не удалось инициализировать token manager: {token_exc}")
+                logger.warning("Официальные модели GigaChat могут не работать")
         else:
             logger.debug("Token manager не инициализирован (GIGACHAT_AUTH_KEY не установлен)")
         
@@ -257,7 +260,7 @@ def setup_model_sync(config_file: str = "config.yml") -> bool:
         True если синхронизация настроена успешно, False если отключена или произошла ошибка
     """
     try:
-        logger.info("🔍 Начало настройки синхронизации моделей...")
+        logger.info("Начало настройки синхронизации моделей")
         
         # Импортируем необходимые модули
         from ..core.proxy_provider_manager import init_multi_proxy_provider_manager
@@ -271,18 +274,16 @@ def setup_model_sync(config_file: str = "config.yml") -> bool:
         providers = provider_manager.get_all_providers()
         
         if not providers:
-            logger.info("ℹ️  Нет настроенных прокси-провайдеров")
+            logger.info("Нет настроенных прокси-провайдеров")
             return True
         
         # Фильтруем провайдеров с включенной синхронизацией
         sync_providers = [p for p in providers if p.sync_enabled]
         
         if not sync_providers:
-            logger.info("ℹ️  Автоматическая синхронизация моделей отключена для всех провайдеров")
+            logger.info("Автоматическая синхронизация моделей отключена для всех провайдеров")
             return True
-        
-        logger.info(f"Найдено {len(sync_providers)} провайдеров с включенной синхронизацией")
-        
+
         # Инициализируем multi sync manager
         multi_sync_manager = init_global_multi_model_sync_manager()
         
@@ -294,16 +295,16 @@ def setup_model_sync(config_file: str = "config.yml") -> bool:
         for provider in sync_providers:
             if multi_sync_manager.add_provider(provider):
                 added_count += 1
-                logger.info(f"  ✓ {provider.name}: интервал {provider.sync_interval}s, суффикс -{provider.suffix}")
+                logger.info(f"{provider.name}: интервал {provider.sync_interval}s, суффикс -{provider.suffix}")
         
         if added_count == 0:
-            logger.warning("⚠️  Не удалось добавить ни одного провайдера для синхронизации")
+            logger.warning("Не удалось добавить ни одного провайдера для синхронизации")
             return False
         
         # Запускаем фоновую синхронизацию для всех провайдеров
         multi_sync_manager.start_all()
         
-        logger.info(f"✓ Автоматическая синхронизация моделей запущена для {added_count} провайдеров")
+        logger.info(f"Автоматическая синхронизация моделей запущена для {added_count} провайдеров")
         
         return True
         
@@ -357,7 +358,7 @@ def start_proxy_server(
             
             # Теперь llm_router существует - запускаем синхронизацию моделей
             if not setup_model_sync(config_file):
-                logger.warning("⚠️ Синхронизация моделей не запущена")
+                logger.warning("Синхронизация моделей не запущена")
         
         # Запускаем инициализацию
         asyncio.run(init_and_start())

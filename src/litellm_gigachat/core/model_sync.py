@@ -36,10 +36,11 @@ class ModelSyncManager:
         sync_interval: int = 300,
         model_suffix: str = "-internal",
         timeout: int = 60,
+        provider_name: str = "unknown",
     ):
         """
         Инициализация менеджера синхронизации.
-
+ß
         Args:
             api_base: Базовый URL внутреннего GigaChat API
             auth_header_name: Название заголовка аутентификации
@@ -47,6 +48,7 @@ class ModelSyncManager:
             sync_interval: Интервал синхронизации в секундах (по умолчанию: 300)
             model_suffix: Суффикс для имен моделей (по умолчанию: "-internal")
             timeout: Таймаут для HTTP запросов в секундах
+            provider_name: Имя провайдера для логирования (по умолчанию: "unknown")
         """
         self.api_base = api_base.rstrip("/")
         self.auth_header_name = auth_header_name
@@ -55,6 +57,7 @@ class ModelSyncManager:
         
         self.model_suffix = model_suffix
         self.timeout = timeout
+        self.provider_name = provider_name
 
         # Состояние
         self._running = False
@@ -100,7 +103,7 @@ class ModelSyncManager:
             data = response.json()
             models = data.get("data", [])
 
-            logger.info(f"✓ Получено {len(models)} моделей с API")
+            logger.debug(f"Получено {len(models)} моделей с API")
             return models
 
         except requests.exceptions.RequestException as exc:
@@ -179,8 +182,8 @@ class ModelSyncManager:
             # не был инициализирован при первой синхронизации
             if self._on_models_updated:
                 try:
-                    self._on_models_updated(list(new_models.values()))
-                    logger.info("✓ Модели успешно обновлены в LiteLLM Router")
+                    self._on_models_updated(list(new_models.values()), self.provider_name)
+                    logger.info("Модели успешно обновлены в LiteLLM Router")
                 except Exception as exc:
                     logger.error(f"Ошибка обновления моделей в Router: {exc}")
                     return False
@@ -189,9 +192,9 @@ class ModelSyncManager:
             if added or removed:
                 logger.info(f"Обнаружены изменения в списке моделей:")
                 if added:
-                    logger.info(f"  + Добавлено: {', '.join(added)}")
+                    logger.info(f"Добавлено: {', '.join(added)}")
                 if removed:
-                    logger.info(f"  - Удалено: {', '.join(removed)}")
+                    logger.info(f"Удалено: {', '.join(removed)}")
             else:
                 logger.debug("Изменений в списке моделей не обнаружено, но модели обновлены в роутере")
 
@@ -201,11 +204,6 @@ class ModelSyncManager:
         """
         Основной цикл синхронизации (выполняется в фоновом потоке).
         """
-        logger.info(f"🔄 Запущен фоновый поток синхронизации моделей (интервал: {self.sync_interval}s)")
-
-        logger.info("⏳ Ожидание 30 секунд перед первой синхронизацией...")
-        logger.info("✓ Запуск первой синхронизации моделей")
-        
         # Первая синхронизация сразу при старте
         try:
             self.sync_models()
@@ -221,7 +219,7 @@ class ModelSyncManager:
             except Exception as exc:
                 logger.error(f"Ошибка в цикле синхронизации: {exc}")
 
-        logger.info("🛑 Фоновый поток синхронизации моделей остановлен")
+        logger.info("Фоновый поток синхронизации моделей остановлен")
 
     def start(self) -> None:
         """
@@ -234,7 +232,6 @@ class ModelSyncManager:
         self._running = True
         self._thread = threading.Thread(target=self._sync_loop, daemon=True)
         self._thread.start()
-        logger.info("✓ Фоновая синхронизация моделей запущена")
 
     def stop(self) -> None:
         """
@@ -249,7 +246,7 @@ class ModelSyncManager:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=5)
 
-        logger.info("✓ Синхронизация моделей остановлена")
+        logger.info("Синхронизация моделей остановлена")
 
     def get_known_models(self) -> List[Dict[str, Any]]:
         """
