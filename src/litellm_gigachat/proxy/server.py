@@ -14,15 +14,12 @@
 
 from __future__ import annotations
 
-import argparse
 import logging
 import os
 import subprocess
-import sys
 from importlib import metadata
 from pathlib import Path
 import certifi
-from dotenv import load_dotenv
 
 # ─────────────────────────────────────────  Настройка логов ─────────────────────────────────────────
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -330,20 +327,9 @@ def start_proxy_server(
     verbose: bool = False,
     debug: bool = False,
 ) -> bool:
-    """Выполняет все проверки и запускает LiteLLM Proxy."""
+    """Запускает LiteLLM Proxy сервер (проверки должны быть выполнены до вызова)."""
 
-    logger.info("🚀 Запуск LiteLLM прокси‑сервера для GigaChat")
-    logger.info("=" * 50)
-
-    # 1. Предварительные проверки
-    if not (check_environment(config_file) and check_dependencies() and setup_certificates() and setup_gigachat_integration()):
-        logger.error("Предварительные проверки не пройдены. Запуск отменен.")
-        return False
-
-    logger.info("✓ Все проверки пройдены, запуск сервера…")
-    logger.info("=" * 50)
-
-    # 2. Проверка файла конфигурации
+    # Проверка файла конфигурации
     if not Path(config_file).exists():
         logger.error("Конфигурационный файл %s не найден!", config_file)
         return False
@@ -404,81 +390,3 @@ def start_proxy_server(
         logger.error("Ошибка запуска прокси‑сервера: %s", exc)
         logger.exception("Детали ошибки:")
         return False
-
-
-# ────────────────────────────────────────────  Точка входа ────────────────────────────────────────────
-
-def main() -> None:  # noqa: D401 — imperative
-    """Парсит аргументы и запускает прокси-сервер."""
-    
-    # Загружаем переменные окружения из .env файла
-    load_dotenv()
-
-    # Парсинг аргументов командной строки
-    parser = argparse.ArgumentParser(
-        description="LiteLLM прокси-сервер для GigaChat API",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Примеры использования:
-  litellm-gigachat                                    # Запуск с настройками по умолчанию
-  litellm-gigachat --host 127.0.0.1 --port 8000      # Кастомный хост и порт
-  litellm-gigachat --config my_config.yml             # Кастомный файл конфигурации
-  litellm-gigachat --verbose                          # Включить подробный вывод
-  litellm-gigachat --debug                            # Включить режим отладки
-        """
-    )
-    
-    parser.add_argument(
-        "--host",
-        default="0.0.0.0",
-        help="Хост для прокси-сервера (по умолчанию: 0.0.0.0)"
-    )
-    
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=4000,
-        help="Порт для прокси-сервера (по умолчанию: 4000)"
-    )
-    
-    parser.add_argument(
-        "--config",
-        default="../config.yml",
-        help="Путь к файлу конфигурации (по умолчанию: config.yml)"
-    )
-    
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Включить подробный вывод (эквивалент --debug для litellm)"
-    )
-
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Включить режим отладки (эквивалент --detailed_debug для litellm)"
-    )
-
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="litellm-gigachat 0.1.4"
-    )
-    
-    args = parser.parse_args()
-
-    if start_proxy_server(
-        host=args.host,
-        port=args.port,
-        config_file=args.config,
-        verbose=args.verbose,
-        debug=args.debug
-    ):
-        logger.info("Сервер завершил работу")
-    else:
-        logger.error("Ошибка при работе сервера")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

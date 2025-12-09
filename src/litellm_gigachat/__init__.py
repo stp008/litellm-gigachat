@@ -14,7 +14,7 @@ from .callbacks import (
     setup_gigachat_transformer,
     get_gigachat_transformer_stats
 )
-from .proxy import start_proxy_server, main
+from .proxy import start_proxy_server
 from .cli.main import cli, main as cli_main
 
 __version__ = "0.1.4"
@@ -35,5 +35,7 @@ __all__ = [
     'get_gigachat_transformer_stats',
     # Proxy
     'start_proxy_server',
-    'main'
+    # CLI
+    'cli',
+    'cli_main'
 ]
