@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import threading
 import time
 from typing import Any, Dict, List, Optional
@@ -170,30 +169,33 @@ class ModelSyncManager:
                     "original_id": model_id,
                 }
 
-            # Определяем изменения
+            # Определяем изменения (для логирования)
             added = set(new_models.keys()) - set(self._known_models.keys())
             removed = set(self._known_models.keys()) - set(new_models.keys())
 
+            # Обновляем известные модели
+            self._known_models = new_models
+
+            # ВСЕГДА вызываем callback для обновления LiteLLM Router
+            # Это гарантирует, что модели будут доступны даже если роутер
+            # не был инициализирован при первой синхронизации
+            if self._on_models_updated:
+                try:
+                    self._on_models_updated(list(new_models.values()))
+                    logger.info("✓ Модели успешно обновлены в LiteLLM Router")
+                except Exception as exc:
+                    logger.error(f"Ошибка обновления моделей в Router: {exc}")
+                    return False
+
+            # Логируем изменения
             if added or removed:
                 logger.info(f"Обнаружены изменения в списке моделей:")
                 if added:
                     logger.info(f"  + Добавлено: {', '.join(added)}")
                 if removed:
                     logger.info(f"  - Удалено: {', '.join(removed)}")
-
-                # Обновляем известные модели
-                self._known_models = new_models
-
-                # Вызываем callback для обновления LiteLLM Router
-                if self._on_models_updated:
-                    try:
-                        self._on_models_updated(list(new_models.values()))
-                        logger.info("✓ Модели успешно обновлены в LiteLLM Router")
-                    except Exception as exc:
-                        logger.error(f"Ошибка обновления моделей в Router: {exc}")
-                        return False
             else:
-                logger.debug("Изменений в списке моделей не обнаружено")
+                logger.debug("Изменений в списке моделей не обнаружено, но модели обновлены в роутере")
 
         return True
 
@@ -203,6 +205,9 @@ class ModelSyncManager:
         """
         logger.info(f"🔄 Запущен фоновый поток синхронизации моделей (интервал: {self.sync_interval}s)")
 
+        logger.info("⏳ Ожидание 30 секунд перед первой синхронизацией...")
+        logger.info("✓ Запуск первой синхронизации моделей")
+        
         # Первая синхронизация сразу при старте
         try:
             self.sync_models()

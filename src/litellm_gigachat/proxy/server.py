@@ -257,9 +257,14 @@ def setup_model_sync() -> bool:
         True если синхронизация настроена успешно, False если отключена или произошла ошибка
     """
     try:
+        logger.info("🔍 Начало настройки синхронизации моделей...")
+        
         # Проверяем, включена ли синхронизация моделей
         model_sync_enabled = os.environ.get("MODEL_SYNC_ENABLED", "false").lower() == "true"
         proxy_enabled = os.environ.get("PROXY_PROVIDER_ENABLED", "false").lower() == "true"
+        
+        logger.info(f"  MODEL_SYNC_ENABLED: {model_sync_enabled}")
+        logger.info(f"  PROXY_PROVIDER_ENABLED: {proxy_enabled}")
         
         if not model_sync_enabled:
             logger.info("ℹ️  Автоматическая синхронизация моделей отключена (MODEL_SYNC_ENABLED=false)")
@@ -337,11 +342,6 @@ def start_proxy_server(
         logger.error("Предварительные проверки не пройдены. Запуск отменен.")
         return False
 
-    # 2. Настройка синхронизации моделей (если включена)
-    if not setup_model_sync():
-        logger.error("Ошибка настройки синхронизации моделей. Запуск отменен.")
-        return False
-
     logger.info("✓ Все проверки пройдены, запуск сервера…")
     logger.info("=" * 50)
 
@@ -361,36 +361,51 @@ def start_proxy_server(
         if verbose:
             logger.info("  Verbose mode: enabled")
 
-    # 4. Сборка команды запуска
-    cmd: list[str] = [
-        "litellm",  # console‑script, попадающий в venv/bin
-        "--config",
-        config_file,
-        "--host",
-        host,
-        "--port",
-        str(port),
-    ]
-    
-    # Добавляем debug флаги если нужно
-    if debug:
-        cmd.append("--detailed_debug")
-    elif verbose:
-        cmd.append("--debug")
-
-    if verbose or debug:
-        logger.info("Выполнение команды: %s", " ".join(cmd))
-
-    # 5. Запуск процесса
+    # 4. Запуск через uvicorn программно (в том же процессе)
     try:
-        subprocess.run(cmd, check=True)
+        import uvicorn
+        import asyncio
+        from litellm.proxy.proxy_server import app, initialize
+        
+        # Инициализация LiteLLM с конфигом
+        async def init_and_start():
+            # Инициализируем LiteLLM
+            await initialize(
+                config=config_file,
+                debug=debug,
+                detailed_debug=debug
+            )
+            
+            # Теперь llm_router существует - запускаем синхронизацию моделей
+            if not setup_model_sync():
+                logger.warning("⚠️ Синхронизация моделей не запущена")
+        
+        # Запускаем инициализацию
+        asyncio.run(init_and_start())
+        
+        # Настройка uvicorn
+        log_level = "debug" if debug else ("info" if verbose else "info")
+        
+        logger.info(f"🚀 Запуск uvicorn на {host}:{port}")
+        
+        # Запуск uvicorn
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            log_level=log_level,
+            access_log=verbose or debug
+        )
+        
         return True
-    except subprocess.CalledProcessError as exc:
-        logger.error("Ошибка запуска прокси‑сервера: %s", exc)
-        return False
+        
     except KeyboardInterrupt:
         logger.info("Получен сигнал прерывания, завершаем работу…")
         return True
+    except Exception as exc:
+        logger.error("Ошибка запуска прокси‑сервера: %s", exc)
+        logger.exception("Детали ошибки:")
+        return False
 
 
 # ────────────────────────────────────────────  Точка входа ────────────────────────────────────────────

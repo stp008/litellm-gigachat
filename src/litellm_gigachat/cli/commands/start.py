@@ -60,10 +60,11 @@ def start(ctx, host, port, config):
     
     # Выполняем все проверки через функции из server.py
     checks = [
-        ("Переменные окружения", check_environment),
+        ("Переменные окружения", lambda: check_environment(config)),
         ("Зависимости", check_dependencies),
         ("Сертификаты", setup_certificates),
-        ("GigaChat интеграция", setup_gigachat_integration)
+        ("GigaChat интеграция", setup_gigachat_integration),
+        ("Синхронизация моделей", setup_model_sync)
     ]
     
     for check_name, check_func in checks:

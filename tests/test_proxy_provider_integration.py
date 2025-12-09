@@ -113,9 +113,6 @@ class ProxyProviderTester:
         print("4. Проверка синхронизации моделей через прокси")
         print("=" * 60)
         
-        print_info("Ожидание синхронизации моделей (15 секунд)...")
-        time.sleep(15)
-        
         try:
             response = requests.get(f"{self.proxy_url}/v1/models", timeout=5)
             
