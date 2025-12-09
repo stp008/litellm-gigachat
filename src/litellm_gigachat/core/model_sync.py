@@ -34,7 +34,6 @@ class ModelSyncManager:
         auth_header_name: str,
         auth_header_value: str,
         sync_interval: int = 300,
-        model_prefix: str = "gigachat-",
         model_suffix: str = "-internal",
         timeout: int = 60,
     ):
@@ -46,7 +45,6 @@ class ModelSyncManager:
             auth_header_name: Название заголовка аутентификации
             auth_header_value: Значение заголовка аутентификации
             sync_interval: Интервал синхронизации в секундах (по умолчанию: 300)
-            model_prefix: Префикс для имен моделей (по умолчанию: "gigachat-")
             model_suffix: Суффикс для имен моделей (по умолчанию: "-internal")
             timeout: Таймаут для HTTP запросов в секундах
         """
@@ -54,7 +52,7 @@ class ModelSyncManager:
         self.auth_header_name = auth_header_name
         self.auth_header_value = auth_header_value
         self.sync_interval = sync_interval
-        self.model_prefix = model_prefix
+        
         self.model_suffix = model_suffix
         self.timeout = timeout
 
@@ -283,7 +281,6 @@ def init_global_model_sync_manager(
     auth_header_name: str,
     auth_header_value: str,
     sync_interval: int = 300,
-    model_prefix: str = "gigachat-",
     model_suffix: str = "-internal",
     timeout: int = 60,
 ) -> ModelSyncManager:
@@ -295,7 +292,6 @@ def init_global_model_sync_manager(
         auth_header_name: Название заголовка аутентификации
         auth_header_value: Значение заголовка аутентификации
         sync_interval: Интервал синхронизации в секундах
-        model_prefix: Префикс для имен моделей
         model_suffix: Суффикс для имен моделей
         timeout: Таймаут для HTTP запросов
 
@@ -309,7 +305,6 @@ def init_global_model_sync_manager(
         auth_header_name=auth_header_name,
         auth_header_value=auth_header_value,
         sync_interval=sync_interval,
-        model_prefix=model_prefix,
         model_suffix=model_suffix,
         timeout=timeout,
     )

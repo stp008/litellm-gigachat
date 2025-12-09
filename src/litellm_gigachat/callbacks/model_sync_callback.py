@@ -6,7 +6,6 @@ Callback для интеграции синхронизации моделей �
 from __future__ import annotations
 
 import logging
-import os
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -29,9 +28,6 @@ def update_models_in_router(models: List[Dict[str, Any]]) -> None:
         if not hasattr(proxy_server, "llm_router") or proxy_server.llm_router is None:
             logger.warning("⚠️ Router ещё не инициализирован, пропускаем обновление")
             return
-        
-        # Модели уже приходят с правильным суффиксом из model_sync.py
-        # Фильтрация не нужна
         
         logger.info(f"Обновление {len(models)} моделей в Router...")
         

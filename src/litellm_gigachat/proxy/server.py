@@ -294,13 +294,11 @@ def setup_model_sync() -> bool:
         from ..callbacks.model_sync_callback import get_update_callback
         
         # Инициализируем менеджер синхронизации
-        # Префикс больше не используется, передаём пустую строку
         sync_manager = init_global_model_sync_manager(
             api_base=api_base,
             auth_header_name=auth_header_name,
             auth_header_value=auth_header_value,
             sync_interval=sync_interval,
-            model_prefix="",  # Префикс не используется
             model_suffix=f"-{model_suffix}",
             timeout=timeout,
         )
