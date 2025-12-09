@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 _update_lock = threading.Lock()
 
 
-def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "unknown") -> None:
+def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "unknown", model_suffix: str = None) -> None:
     """
     Обновить список моделей в LiteLLM Router через upsert_deployment.
     
@@ -28,6 +28,7 @@ def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "
     Args:
         models: Список моделей для обновления
         provider_name: Имя провайдера (для логирования)
+        model_suffix: Суффикс моделей провайдера (например, "-p1", "-p2")
     """
     # Используем блокировку для предотвращения одновременного выполнения
     with _update_lock:
@@ -43,25 +44,21 @@ def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "
                 logger.warning("Router ещё не инициализирован, пропускаем обновление")
                 return
             
-            # Получаем суффикс для определения синхронизированных моделей
-            model_suffix = os.environ.get("PROXY_PROVIDER_MODEL_SUFFIX", "proxy")
-            sync_suffix = f"-{model_suffix}"
-            
-            # 1. Удаляем ВСЕ старые deployments с нашим суффиксом
-            # Это предотвращает дубликаты при использовании upsert_deployment
+            # 1. Удаляем ВСЕ старые deployments с суффиксом этого провайдера
+            # Это предотвращает дубликаты и устаревшие модели
             deleted_count = 0
-            if hasattr(proxy_server.llm_router, 'model_list'):
+            if model_suffix and hasattr(proxy_server.llm_router, 'model_list'):
                 original_count = len(proxy_server.llm_router.model_list)
                 
-                # Фильтруем - оставляем только модели БЕЗ нашего суффикса
+                # Фильтруем - оставляем только модели БЕЗ суффикса этого провайдера
                 proxy_server.llm_router.model_list = [
                     d for d in proxy_server.llm_router.model_list 
-                    if not d.get("model_name", "").endswith(sync_suffix)
+                    if not d.get("model_name", "").endswith(model_suffix)
                 ]
                 
                 deleted_count = original_count - len(proxy_server.llm_router.model_list)
                 if deleted_count > 0:
-                    logger.info(f"Удалено {deleted_count} старых deployments с суффиксом {sync_suffix}")
+                    logger.info(f"Удалено {deleted_count} старых deployments провайдера {provider_name} с суффиксом {model_suffix}")
             
             # 2. Добавляем/обновляем модели из API
             logger.info(f"Обновление {len(models)} моделей в Router...")
@@ -121,7 +118,7 @@ def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "
                     logger.error(f"Ошибка обновления модели {model.get('model_name')}: {model_exc}")
                     continue
             
-            logger.info(f"Модели для провайдера обновлены: добавлено {added_count}, обновлено {updated_count}, удалено {deleted_count} моделей")
+            logger.info(f"Модели для провайдера {provider_name} обновлены: добавлено {added_count}, обновлено {updated_count}, удалено {deleted_count} моделей")
             
             # Логируем текущий список моделей
             current_models = proxy_server.llm_router.get_model_names()

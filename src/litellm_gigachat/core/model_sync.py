@@ -182,7 +182,7 @@ class ModelSyncManager:
             # не был инициализирован при первой синхронизации
             if self._on_models_updated:
                 try:
-                    self._on_models_updated(list(new_models.values()), self.provider_name)
+                    self._on_models_updated(list(new_models.values()), self.provider_name, self.model_suffix)
                     logger.info("Модели успешно обновлены в LiteLLM Router")
                 except Exception as exc:
                     logger.error(f"Ошибка обновления моделей в Router: {exc}")
