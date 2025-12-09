@@ -5,6 +5,7 @@ Callback для интеграции синхронизации моделей �
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import threading
 from typing import Any, Dict, List
@@ -94,11 +95,16 @@ def update_models_in_router(models: List[Dict[str, Any]], provider_name: str = "
                         timeout=litellm_params_dict.get("timeout"),
                     )
                     
-                    # Создаём Deployment
+                    # Генерируем уникальный ID для модели
+                    # Используем комбинацию model_name и api_base для уникальности
+                    api_base = litellm_params_dict.get("api_base", "")
+                    model_id = hashlib.sha256(f"{model_name}:{api_base}".encode()).hexdigest()
+                    
+                    # Создаём Deployment с уникальным ID
                     deployment = Deployment(
                         model_name=model_name,
                         litellm_params=litellm_params,
-                        model_info=ModelInfo()
+                        model_info=ModelInfo(id=model_id)
                     )
                     
                     # Добавляем модель в Router

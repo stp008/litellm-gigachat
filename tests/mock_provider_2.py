@@ -27,13 +27,13 @@ EXPECTED_AUTH_VALUE = "test-token-provider2"
 # Список доступных моделей
 AVAILABLE_MODELS = [
     {
-        "id": "gpt-4-turbo",
+        "id": "gp8989898-turbo",
         "object": "model",
         "created": int(time.time()),
         "owned_by": "provider2"
     },
     {
-        "id": "claude-3-opus",
+        "id": "c90089opus",
         "object": "model",
         "created": int(time.time()),
         "owned_by": "provider2"
