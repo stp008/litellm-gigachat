@@ -12,7 +12,6 @@ from ...proxy.server import (
     check_dependencies,
     setup_certificates,
     setup_gigachat_integration,
-    setup_model_sync,
     start_proxy_server
 )
 
@@ -59,12 +58,12 @@ def start(ctx, host, port, config):
         click.echo("=" * 50)
     
     # Выполняем все проверки через функции из server.py
+    # Примечание: setup_model_sync вызывается внутри start_proxy_server после инициализации Router
     checks = [
         ("Переменные окружения", lambda: check_environment(config)),
         ("Зависимости", check_dependencies),
         ("Сертификаты", setup_certificates),
         ("GigaChat интеграция", setup_gigachat_integration),
-        ("Синхронизация моделей", setup_model_sync)
     ]
     
     for check_name, check_func in checks:
