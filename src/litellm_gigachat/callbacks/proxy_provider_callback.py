@@ -2,19 +2,19 @@ import logging
 from typing import Optional, Dict, Any, Literal
 from litellm.integrations.custom_logger import CustomLogger
 from litellm.proxy.proxy_server import UserAPIKeyAuth, DualCache
-from ..core.proxy_provider_manager import get_global_proxy_provider_manager
+from ..core.proxy_provider_manager import get_global_multi_proxy_provider_manager
 
 logger = logging.getLogger(__name__)
 
 class ProxyProviderCallback(CustomLogger):
     """
     Callback для LiteLLM Proxy, который автоматически добавляет заголовки 
-    для прокси-провайдера (кастомный API endpoint)
+    для прокси-провайдеров (кастомные API endpoints)
     """
     
     def __init__(self):
         super().__init__()
-        self.provider_manager = get_global_proxy_provider_manager()
+        self.multi_manager = get_global_multi_proxy_provider_manager()
         
     async def async_pre_call_hook(
         self, 
@@ -32,7 +32,7 @@ class ProxyProviderCallback(CustomLogger):
     ) -> dict:
         """
         Вызывается перед каждым API запросом в LiteLLM Proxy.
-        Автоматически добавляет заголовки для моделей прокси-провайдера.
+        Автоматически добавляет заголовки для моделей прокси-провайдеров.
         """
         logger.debug("ProxyProvider async_pre_call_hook вызван")
         
@@ -41,16 +41,18 @@ class ProxyProviderCallback(CustomLogger):
             model = data.get('model', '')
             logger.debug(f"Обрабатываем модель: {model}")
             
-            # Проверяем, что это запрос к модели прокси-провайдера
-            if self._is_proxy_provider_model(model, data):
-                logger.info(f"Добавляем заголовки для модели прокси-провайдера: {model}")
+            # Находим провайдера для этой модели
+            provider = self.multi_manager.get_provider_by_suffix(model)
+            
+            if provider:
+                logger.info(f"Добавляем заголовки для модели {model} (провайдер: {provider.name})")
                 
-                # Получаем заголовки аутентификации
-                auth_headers = self.provider_manager.get_auth_headers()
+                # Получаем заголовки аутентификации для этого провайдера
+                auth_headers = provider.get_auth_headers()
                 logger.debug(f"Заголовки аутентификации: {list(auth_headers.keys())}")
                 
-                # Получаем URL прокси-провайдера
-                provider_url = self.provider_manager.get_provider_url()
+                # Получаем URL провайдера
+                provider_url = provider.url
                 
                 if provider_url:
                     # Обновляем URL на прокси-провайдер
@@ -88,7 +90,7 @@ class ProxyProviderCallback(CustomLogger):
                     data['api_key'] = "none"
                     logger.debug("api_key установлен в 'none' для модели прокси-провайдера")
                 
-                logger.info(f"Заголовки и URL успешно настроены для модели {model}")
+                logger.info(f"Заголовки и URL успешно настроены для модели {model} (провайдер: {provider.name})")
             else:
                 logger.debug(f"Модель {model} не является моделью прокси-провайдера")
                 
@@ -107,14 +109,16 @@ class ProxyProviderCallback(CustomLogger):
     ):
         """
         Вызывается при ошибке API запроса в LiteLLM Proxy.
-        Обрабатываем ошибки для моделей прокси-провайдера.
+        Обрабатываем ошибки для моделей прокси-провайдеров.
         """
         try:
             # Получаем модель из данных запроса
             model = request_data.get('model', '')
             
-            # Проверяем, что это ошибка для модели прокси-провайдера
-            if self._is_proxy_provider_model(model, request_data):
+            # Находим провайдера для этой модели
+            provider = self.multi_manager.get_provider_by_suffix(model)
+            
+            if provider:
                 # Проверяем различные типы ошибок
                 error_message = str(original_exception).lower()
                 
@@ -124,12 +128,12 @@ class ProxyProviderCallback(CustomLogger):
                     'forbidden' in error_message or
                     'invalid' in error_message):
                     
-                    logger.warning(f"Ошибка аутентификации для модели прокси-провайдера {model}")
+                    logger.warning(f"Ошибка аутентификации для модели {model} (провайдер: {provider.name})")
                     logger.debug(f"Ошибка: {original_exception}")
                     
                     # Логируем информацию о конфигурации для отладки
-                    config_info = self.provider_manager.get_configuration_info()
-                    logger.debug(f"Конфигурация прокси-провайдера: {config_info}")
+                    config_info = self.multi_manager.get_configuration_info()
+                    logger.debug(f"Конфигурация прокси-провайдеров: {config_info}")
                 
         except Exception as e:
             logger.error(f"Ошибка в async_post_call_failure_hook для модели прокси-провайдера: {e}")
@@ -142,33 +146,15 @@ class ProxyProviderCallback(CustomLogger):
     ):
         """
         Вызывается после успешного API запроса.
-        Логируем успешные запросы к моделям прокси-провайдера.
+        Логируем успешные запросы к моделям прокси-провайдеров.
         """
         try:
             model = data.get('model', '')
-            if self._is_proxy_provider_model(model, data):
-                logger.debug(f"Успешный запрос к модели прокси-провайдера {model}")
+            provider = self.multi_manager.get_provider_by_suffix(model)
+            if provider:
+                logger.debug(f"Успешный запрос к модели {model} (провайдер: {provider.name})")
         except Exception as e:
             logger.error(f"Ошибка в async_post_call_success_hook для модели прокси-провайдера: {e}")
-    
-    def _is_proxy_provider_model(self, model: str, kwargs: Dict[str, Any]) -> bool:
-        """
-        Проверяет, является ли модель моделью прокси-провайдера
-        """
-        # Проверяем через provider manager
-        if self.provider_manager.is_proxy_model(model):
-            return True
-            
-        # Дополнительная проверка по api_base
-        api_base = kwargs.get('api_base', '')
-        if 'litellm_params' in kwargs:
-            api_base = kwargs['litellm_params'].get('api_base', api_base)
-        
-        provider_url = self.provider_manager.get_provider_url()
-        if provider_url and provider_url in api_base:
-            return True
-            
-        return False
 
 
 # Глобальный экземпляр callback

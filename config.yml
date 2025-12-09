@@ -1,3 +1,40 @@
+# ============================================================================
+# Конфигурация прокси-провайдеров (новая секция)
+# ============================================================================
+# Позволяет настроить несколько источников моделей с автоматической синхронизацией
+
+proxy_providers:
+  # Пример 1: Внутренний GigaChat API
+  - name: internal-gigachat              # уникальное имя провайдера
+    url: https://internal-api.company.com/api/v1
+    auth_header: X-Client-Id             # название заголовка аутентификации
+    auth_value: ${INTERNAL_GIGACHAT_AUTH}  # значение из переменной окружения
+    suffix: internal                     # суффикс для моделей (модели будут: model-internal)
+    sync_enabled: true                   # автоматическая синхронизация моделей
+    sync_interval: 300                   # интервал синхронизации в секундах
+    timeout: 60                          # таймаут запросов
+  
+  # Пример 2: Внешний LLM провайдер
+  - name: external-llm
+    url: https://external-llm.company.com/api/v1
+    auth_header: Authorization
+    auth_value: ${EXTERNAL_LLM_TOKEN}
+    suffix: ext                          # модели будут: model-ext
+    sync_enabled: true
+    sync_interval: 600
+    timeout: 120
+
+# Примечания:
+# - auth_value поддерживает подстановку переменных окружения: ${VAR_NAME}
+# - Если sync_enabled=true, модели будут автоматически синхронизироваться
+# - Каждый провайдер должен иметь уникальный suffix
+# - Для обратной совместимости можно использовать старые переменные окружения
+#   (PROXY_PROVIDER_URL, PROXY_PROVIDER_AUTH_VALUE и т.д.)
+
+# ============================================================================
+# Список моделей
+# ============================================================================
+
 model_list:
   # Официальные модели GigaChat (с токенами)
   - model_name: gigachat                 # публичное имя (как увидит клиент)
@@ -19,22 +56,21 @@ model_list:
       api_key: "auto"                    # токен будет автоматически обновляться через callback
       timeout: 60
 
-# Модели прокси-провайдера (кастомный API endpoint)
-# При включении MODEL_SYNC_ENABLED=true модели добавляются автоматически
-# Если синхронизация отключена, раскомментируйте модели ниже:
+# Модели прокси-провайдеров добавляются автоматически при sync_enabled=true
+# Если синхронизация отключена, можно добавить модели вручную:
 
-  - model_name: gigachat-2-max-proxy     # пример модели через прокси-провайдер
-    litellm_params:
-      model: openai/GigaChat-2-Max
-      api_base: https://my-api.company.com/api/v1  # будет заменен на PROXY_PROVIDER_URL
-      api_key: "none"                    # не используется для моделей прокси-провайдера
-      timeout: 60
-  - model_name: llama-3.1-70b-proxy      # пример другой модели
-    litellm_params:
-      model: openai/llama-3.1-70b
-      api_base: https://my-api.company.com/api/v1
-      api_key: "none"
-      timeout: 60
+#  - model_name: gigachat-2-max-internal  # пример модели через internal-gigachat
+#    litellm_params:
+#      model: openai/GigaChat-2-Max
+#      api_base: https://internal-api.company.com/api/v1
+#      api_key: "none"                    # не используется для моделей прокси-провайдера
+#      timeout: 60
+#  - model_name: llama-3.1-70b-ext        # пример модели через external-llm
+#    litellm_params:
+#      model: openai/llama-3.1-70b
+#      api_base: https://external-llm.company.com/api/v1
+#      api_key: "none"
+#      timeout: 120
 
 litellm_settings:
   set_verbose: True

@@ -246,9 +246,12 @@ def setup_gigachat_integration() -> bool:
         return False
 
 
-def setup_model_sync() -> bool:
+def setup_model_sync(config_file: str = "config.yml") -> bool:
     """
-    Настройка автоматической синхронизации моделей для прокси-провайдера.
+    Настройка автоматической синхронизации моделей для прокси-провайдеров.
+    
+    Args:
+        config_file: Путь к файлу конфигурации
     
     Returns:
         True если синхронизация настроена успешно, False если отключена или произошла ошибка
@@ -256,65 +259,57 @@ def setup_model_sync() -> bool:
     try:
         logger.info("🔍 Начало настройки синхронизации моделей...")
         
-        # Проверяем, включена ли синхронизация моделей
-        model_sync_enabled = os.environ.get("MODEL_SYNC_ENABLED", "false").lower() == "true"
-        proxy_enabled = os.environ.get("PROXY_PROVIDER_ENABLED", "false").lower() == "true"
-        
-        logger.info(f"  MODEL_SYNC_ENABLED: {model_sync_enabled}")
-        logger.info(f"  PROXY_PROVIDER_ENABLED: {proxy_enabled}")
-        
-        if not model_sync_enabled:
-            logger.info("ℹ️  Автоматическая синхронизация моделей отключена (MODEL_SYNC_ENABLED=false)")
-            return True
-        
-        if not proxy_enabled:
-            logger.warning("⚠️  MODEL_SYNC_ENABLED=true, но PROXY_PROVIDER_ENABLED=false")
-            logger.warning("   Синхронизация моделей работает только с прокси-провайдером")
-            return True
-        
-        # Получаем параметры из переменных окружения
-        api_base = os.environ.get("PROXY_PROVIDER_URL")
-        auth_header_name = os.environ.get("PROXY_PROVIDER_AUTH_HEADER", "X-Client-Id")
-        auth_header_value = os.environ.get("PROXY_PROVIDER_AUTH_VALUE")
-        
-        if not api_base or not auth_header_value:
-            logger.error("❌ Для синхронизации моделей требуются PROXY_PROVIDER_URL и PROXY_PROVIDER_AUTH_VALUE")
-            return False
-        
-        # Получаем дополнительные параметры
-        sync_interval = int(os.environ.get("MODEL_SYNC_INTERVAL", "300"))
-        model_suffix = os.environ.get("PROXY_PROVIDER_MODEL_SUFFIX", "proxy")
-        timeout = int(os.environ.get("GIGACHAT_TIMEOUT", "60"))
-        
-        # Импортируем модули синхронизации
-        from ..core.model_sync import init_global_model_sync_manager
+        # Импортируем необходимые модули
+        from ..core.proxy_provider_manager import init_multi_proxy_provider_manager
+        from ..core.multi_model_sync import init_global_multi_model_sync_manager
         from ..callbacks.model_sync_callback import get_update_callback
         
-        # Инициализируем менеджер синхронизации
-        sync_manager = init_global_model_sync_manager(
-            api_base=api_base,
-            auth_header_name=auth_header_name,
-            auth_header_value=auth_header_value,
-            sync_interval=sync_interval,
-            model_suffix=f"-{model_suffix}",
-            timeout=timeout,
-        )
+        # Инициализируем менеджер прокси-провайдеров
+        provider_manager = init_multi_proxy_provider_manager(config_file)
+        
+        # Получаем список всех провайдеров
+        providers = provider_manager.get_all_providers()
+        
+        if not providers:
+            logger.info("ℹ️  Нет настроенных прокси-провайдеров")
+            return True
+        
+        # Фильтруем провайдеров с включенной синхронизацией
+        sync_providers = [p for p in providers if p.sync_enabled]
+        
+        if not sync_providers:
+            logger.info("ℹ️  Автоматическая синхронизация моделей отключена для всех провайдеров")
+            return True
+        
+        logger.info(f"Найдено {len(sync_providers)} провайдеров с включенной синхронизацией")
+        
+        # Инициализируем multi sync manager
+        multi_sync_manager = init_global_multi_model_sync_manager()
         
         # Устанавливаем callback для обновления моделей
-        sync_manager.set_update_callback(get_update_callback())
+        multi_sync_manager.set_update_callback(get_update_callback())
         
-        # Запускаем фоновую синхронизацию
-        sync_manager.start()
+        # Добавляем каждого провайдера
+        added_count = 0
+        for provider in sync_providers:
+            if multi_sync_manager.add_provider(provider):
+                added_count += 1
+                logger.info(f"  ✓ {provider.name}: интервал {provider.sync_interval}s, суффикс -{provider.suffix}")
         
-        logger.info("✓ Автоматическая синхронизация моделей запущена")
-        logger.info(f"  Интервал: {sync_interval} секунд")
-        logger.info(f"  API: {api_base}")
-        logger.info(f"  Суффикс моделей: -{model_suffix}")
+        if added_count == 0:
+            logger.warning("⚠️  Не удалось добавить ни одного провайдера для синхронизации")
+            return False
+        
+        # Запускаем фоновую синхронизацию для всех провайдеров
+        multi_sync_manager.start_all()
+        
+        logger.info(f"✓ Автоматическая синхронизация моделей запущена для {added_count} провайдеров")
         
         return True
         
     except Exception as exc:  # pylint: disable=broad-except
         logger.error(f"Ошибка настройки синхронизации моделей: {exc}")
+        logger.exception("Детали ошибки:")
         return False
 
 
@@ -361,7 +356,7 @@ def start_proxy_server(
             )
             
             # Теперь llm_router существует - запускаем синхронизацию моделей
-            if not setup_model_sync():
+            if not setup_model_sync(config_file):
                 logger.warning("⚠️ Синхронизация моделей не запущена")
         
         # Запускаем инициализацию
