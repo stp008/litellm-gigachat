@@ -138,7 +138,9 @@ def get_global_token_manager() -> TokenManager:
     """Получение глобального экземпляра TokenManager"""
     global _global_token_manager
     if _global_token_manager is None:
-        _global_token_manager = TokenManager()
+        # Читаем scope из переменной окружения, если указан
+        scope = os.environ.get("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
+        _global_token_manager = TokenManager(scope=scope)
     return _global_token_manager
 
 def get_gigachat_token() -> str:
